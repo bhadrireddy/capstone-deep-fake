@@ -114,7 +114,7 @@ st.markdown("""
 
         /* "Drop your image here..." / "Drop your video here..." label */
         [data-testid="stFileUploader"] label {
-            font-size: 2.6rem !important;                  /* bigger label */
+            font-size: 8rem !important;                  /* bigger label */
             font-weight: 900 !important;
             color: #0f172a !important;                     /* dark text */
         }
@@ -152,7 +152,7 @@ st.markdown("""
             justify-content: center;
         }
         .stRadio label {
-            font-size: 5.2rem !important; /* slightly bigger */
+            font-size: 6.5rem !important; /* slightly bigger */
             padding: 1.2rem 3.5rem !important;
             background-color: rgba(255,255,255,0.9);
             border: 3px solid #cbd5e1;
@@ -388,3 +388,4 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
+
