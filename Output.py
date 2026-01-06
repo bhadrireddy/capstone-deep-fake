@@ -96,36 +96,63 @@ st.markdown("""
             box-shadow: 0 15px 30px rgba(0,0,0,0.15);
         }
         
-        /* File Uploader - Massive Area */
+        /* ================= FILE UPLOADER ================= */
+
+        /* Outer uploader container: bigger, white */
         [data-testid="stFileUploader"] {
-            padding: 5rem 3rem !important; /* 4 -> 5, 2 -> 3 : bigger box */
-            background-color: rgba(255,255,255,0.8);
-            border: 4px dashed #64748b;
-            border-radius: 2.5rem;
+            padding: 5rem 3rem !important;
+            border-radius: 2.5rem !important;
+            background-color: #ffffff !important;          /* white box */
+            border: 3px dashed #64748b !important;
         }
-        /* "Drop your image here" / "Drop your video here" text */
-        [data-testid="stFileUploader"] div div {
-            font-size: 2.4rem !important;  /* increased font size */
-            color: #1e3a8a !important;     /* darker, more visible */
-            font-weight: 700 !important;
+
+        /* Inner dark bar (dropzone wrapper) → white */
+        [data-testid="stFileUploader"] > div:first-child {
+            background-color: #ffffff !important;          /* kill dark background */
+            border-radius: 1.5rem !important;
         }
-        /* "Drag and drop file here" text */
+
+        /* "Drop your image here..." / "Drop your video here..." label */
+        [data-testid="stFileUploader"] label {
+            font-size: 2.6rem !important;                  /* bigger label */
+            font-weight: 900 !important;
+            color: #0f172a !important;                     /* dark text */
+        }
+
+        /* Main drag-and-drop button area */
+        [data-testid="stFileUploader"] div[role="button"] {
+            background-color: #ffffff !important;          /* white, not black */
+            color: #0f172a !important;
+            font-size: 2.8rem !important;                  /* much bigger text */
+            font-weight: 800 !important;
+            padding: 2.5rem 2rem !important;
+            border-radius: 1.5rem !important;
+        }
+
+        /* Text inside drag-and-drop button */
+        [data-testid="stFileUploader"] div[role="button"] p {
+            color: #0f172a !important;
+            font-size: 2.8rem !important;
+            font-weight: 800 !important;
+        }
+
+        /* "Limit 200MB per file..." – inside same box & bigger */
         [data-testid="stFileUploader"] small {
-             font-size: 1.6rem !important;
+             font-size: 1.8rem !important;
              display: block;
-             margin-top: 1rem;
-             color: #b91c1c !important;    /* changed color (red accent) */
+             margin-top: 0.8rem;
+             color: #0f172a !important;                    /* dark, readable */
              font-weight: 600 !important;
         }
 
-        /* Radio Buttons (File Type) - make huge */
+        /* Radio Buttons (File Type) - huge */
         .stRadio > div {
             flex-direction: row;
             gap: 50px;
             justify-content: center;
         }
         .stRadio label {
-            font-size: 3.2rem !important; /* slightly bigger */
+            font-size: 5.2rem !important; /* slightly bigger */
             padding: 1.2rem 3.5rem !important;
             background-color: rgba(255,255,255,0.9);
             border: 3px solid #cbd5e1;
@@ -138,7 +165,6 @@ st.markdown("""
             font-size: 3rem !important;  /* tremendously bigger label */
             margin-bottom: 1rem !important;
         }
-        /* Control itself */
         .stSelectbox div[data-baseweb="select"] > div {
             font-size: 2.2rem !important;     /* bigger value text */
             min-height: 6rem !important;      /* taller dropdown */
@@ -146,10 +172,9 @@ st.markdown("""
             padding-bottom: 1.2rem;
             color: #111827 !important;        /* force dark text */
         }
-        /* Dropdown options text color and size */
         .stSelectbox div[data-baseweb="select"] ul li {
             font-size: 2.2rem !important;
-            color: #111827 !important;        /* make dropdown option text black */
+            color: #111827 !important;        /* dropdown option text black */
         }
         
         /* Sliders */
@@ -173,14 +198,13 @@ st.markdown("""
             padding: 1.8rem !important;
             color: #0f172a !important;
         }
-        /* Expander body: keep light background and remove extra white box effect */
         .streamlit-expanderContent {
             background-color: rgba(255,255,255,0.7) !important;
             padding-top: 1.5rem !important;
             padding-bottom: 1.5rem !important;
         }
         .streamlit-expanderContent > div {
-            background-color: transparent !important; /* avoid white inner box */
+            background-color: transparent !important; /* avoid inner white box */
             box-shadow: none !important;
         }
 
