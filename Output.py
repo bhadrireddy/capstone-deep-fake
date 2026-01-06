@@ -39,9 +39,9 @@ st.markdown("""
             font-family: 'Inter', sans-serif;
         }
         
-        /* The Main Gradient Background */
+        /* The Main Warm Light Background */
         .stApp {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #faf5f0;
             background-attachment: fixed;
         }
 
@@ -52,12 +52,12 @@ st.markdown("""
         
         /* Custom Classes from your HTML */
         .hero-title {
-            font-size: 4.5rem;
+            font-size: 7rem;
             font-weight: 900;
             line-height: 1.1;
             letter-spacing: -0.02em;
             text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-            color: white;
+            color: #2d3748;
         }
         
         .card-shadow {
@@ -74,12 +74,13 @@ st.markdown("""
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 0.75rem 1.5rem;
+            padding: 1.5rem 3rem;
             border-radius: 0.75rem;
             font-weight: 700;
-            font-size: 1.1rem;
+            font-size: 1.8rem;
             transition: all 0.3s ease;
             width: 100%;
+            min-height: 80px;
         }
         .stButton button:hover {
             transform: translateY(-2px);
@@ -89,6 +90,9 @@ st.markdown("""
         /* Red 'Start Detection' Button Style Override */
         .btn-danger button {
             background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+            font-size: 2rem !important;
+            padding: 2rem 4rem !important;
+            min-height: 100px !important;
         }
         .btn-danger button:hover {
             box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4) !important;
@@ -97,11 +101,13 @@ st.markdown("""
         /* File Uploader Styling */
         [data-testid="stFileUploader"] {
             background-color: #f8f9ff;
-            border: 3px dashed #cbd5e1;
+            border: 4px dashed #cbd5e1;
             border-radius: 1rem;
-            padding: 2rem;
+            padding: 4rem;
             text-align: center;
             transition: all 0.3s ease;
+            font-size: 1.5rem;
+            min-height: 300px;
         }
         [data-testid="stFileUploader"]:hover {
             border-color: #667eea;
@@ -112,12 +118,40 @@ st.markdown("""
         .stSelectbox > div > div {
             border-radius: 0.5rem;
             border: 2px solid #e5e7eb;
+            font-size: 1.3rem;
+            padding: 1rem;
         }
         
-        /* Radio Buttons (File Type) */
+        /* Radio Buttons (File Type) - Make huge */
         .stRadio > div {
             flex-direction: row;
-            gap: 20px;
+            gap: 30px;
+        }
+        .stRadio label {
+            font-size: 2rem !important;
+            padding: 1.5rem 2rem !important;
+            min-height: 80px !important;
+        }
+        
+        /* Make all text bigger in main page */
+        .main-page-text {
+            font-size: 2rem !important;
+        }
+        
+        /* Make expander text bigger */
+        .streamlit-expanderHeader {
+            font-size: 1.8rem !important;
+            padding: 1.5rem !important;
+        }
+        
+        /* Make slider labels bigger */
+        .stSlider label {
+            font-size: 1.5rem !important;
+        }
+        
+        /* Make selectbox labels bigger */
+        .stSelectbox label {
+            font-size: 1.5rem !important;
         }
         
         /* Hide images in fullscreen */
@@ -146,10 +180,10 @@ if st.session_state.page == 'hero':
         st.markdown("""
             <div style="text-align: center; padding-top: 10vh; margin-bottom: 2rem;">
                 <h1 class="hero-title">Deepfake Detector</h1>
-                <h2 style="font-size: 2.25rem; font-weight: 600; color: white; margin-bottom: 2rem;">
+                <h2 style="font-size: 4rem; font-weight: 600; color: #2d3748; margin-bottom: 2rem;">
                     Detect AI-generated images and videos
                 </h2>
-                <p style="font-size: 1.25rem; color: rgba(255,255,255,0.9); max-width: 42rem; margin: 0 auto 3rem auto; line-height: 1.6;">
+                <p style="font-size: 2rem; color: #4a5568; max-width: 42rem; margin: 0 auto 3rem auto; line-height: 1.6;">
                     Upload an image or video to check if it has been manipulated using deepfake techniques. 
                     Our advanced AI models analyze media files to detect artificial manipulation with high accuracy.
                 </p>
@@ -174,165 +208,142 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
         # Header within the main page
         st.markdown("""
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
-                <h1 style="font-size: 2.25rem; font-weight: 700; color: white;">Deepfake Detector</h1>
-                <div style="background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 0.5rem; color: white;">
-                    <i class="fas fa-robot"></i> AI Powered
-                </div>
+                <h1 style="font-size: 4rem; font-weight: 700; color: #2d3748;">Deepfake Detector</h1>
             </div>
         """, unsafe_allow_html=True)
 
-        # White Card Container
-        with st.container():
-            st.markdown('<div class="card-shadow">', unsafe_allow_html=True)
+        # Remove white card container - content directly on page
+        # --- INPUT SECTION (Only show if no result yet) ---
+        if st.session_state.result_data is None:
+            st.markdown('<h2 style="font-size: 3rem; font-weight: 700; margin-bottom: 2rem; color: #111827;">Select File Type</h2>', unsafe_allow_html=True)
+            
+            # Custom File Type Selection
+            file_type = st.radio(
+                "Select file type:", 
+                ("Image", "Video"), 
+                horizontal=True,
+                label_visibility="collapsed"
+            )
+            
+            st.markdown('<h2 style="font-size: 3rem; font-weight: 700; margin-top: 3rem; margin-bottom: 2rem; color: #111827;">Upload File</h2>', unsafe_allow_html=True)
+            
+            # File Uploader
+            uploaded_file = st.file_uploader(
+                f"Choose a {file_type.lower()}...", 
+                type=["jpg", "jpeg", "png", "mp4"]
+            )
+            
+            # Preview Media
+if uploaded_file is not None:
+                st.success(f"File uploaded successfully: {uploaded_file.name}")
+    if file_type == "Image":
+        try:
+            image = Image.open(uploaded_file)
+                        st.image(image, caption="Preview", width=400)
+        except Exception as e:
+                        st.error("Error: Invalid Image File")
+    else:
+        st.video(uploaded_file)
 
-            # --- INPUT SECTION (Only show if no result yet) ---
-            if st.session_state.result_data is None:
-                st.markdown('<h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: #111827;">Select File Type</h2>', unsafe_allow_html=True)
+            # Advanced Settings (Collapsible)
+            st.markdown('<h2 style="font-size: 3rem; font-weight: 700; margin-top: 3rem; margin-bottom: 2rem; color: #111827;">Advanced Settings</h2>', unsafe_allow_html=True)
+            with st.expander("⚙️ Advanced Settings", expanded=False):
+                st.markdown('<p style="color: #666; font-size: 1.5rem; margin-bottom: 2rem;">Fine-tune detection with custom models and thresholds.</p>', unsafe_allow_html=True)
                 
-                # Custom File Type Selection
-                file_type = st.radio(
-                    "Select file type:", 
-                    ("Image", "Video"), 
-                    horizontal=True,
-                    label_visibility="collapsed"
+                model = st.selectbox(
+                    "Select Model", 
+                    ("EfficientNetB4", "EfficientNetB4ST", "EfficientNetAutoAttB4", "EfficientNetAutoAttB4ST")
                 )
                 
-                st.markdown('<h2 style="font-size: 1.5rem; font-weight: 700; margin-top: 1.5rem; margin-bottom: 1rem; color: #111827;">Upload File</h2>', unsafe_allow_html=True)
+                col_set1, col_set2 = st.columns(2)
+                with col_set1:
+                    dataset = st.radio("Select Dataset", ("DFDC", "FFPP"), horizontal=True)
                 
-                # File Uploader
-                uploaded_file = st.file_uploader(
-                    f"Choose a {file_type.lower()}...", 
-                    type=["jpg", "jpeg", "png", "mp4"]
-                )
-                
-                # Preview Media
-                if uploaded_file is not None:
-                    st.success(f"File uploaded successfully: {uploaded_file.name}")
-                    if file_type == "Image":
-                        try:
-                            image = Image.open(uploaded_file)
-                            st.image(image, caption="Preview", width=400)
-                        except Exception as e:
-                            st.error("Error: Invalid Image File")
+                with col_set2:
+                    threshold = st.slider("Select Threshold", 0.0, 1.0, 0.5)
+                    if file_type == "Video":
+                        frames = st.slider("Select Frames", 0, 100, 50)
                     else:
-                        st.video(uploaded_file)
+                        frames = 0 # Default for image
 
-                # Advanced Settings (Collapsible)
-                with st.expander("Advanced Settings"):
-                    st.markdown('<p style="color: #666; font-size: 0.9rem;">Fine-tune detection with custom models and thresholds.</p>', unsafe_allow_html=True)
-                    
-                    model = st.selectbox(
-                        "Select Model", 
-                        ("EfficientNetB4", "EfficientNetB4ST", "EfficientNetAutoAttB4", "EfficientNetAutoAttB4ST")
-                    )
-                    
-                    col_set1, col_set2 = st.columns(2)
-                    with col_set1:
-                        dataset = st.radio("Select Dataset", ("DFDC", "FFPP"))
-                    
-                    with col_set2:
-                        threshold = st.slider("Select Threshold", 0.0, 1.0, 0.5)
-                        if file_type == "Video":
-                            frames = st.slider("Select Frames", 0, 100, 50)
-                        else:
-                            frames = 0 # Default for image
-
-                # Check Button logic
-                if uploaded_file is not None:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("Check for Deepfake", use_container_width=True):
-                        # --- ORIGINAL LOGIC INTEGRATION START ---
-                        with st.spinner("Analyzing frames and extracting features..."):
-                            # This simulates the "Loading" page from HTML
-                            time.sleep(1) # Small UX pause
-                            
-                            if file_type == "Image":
-                                result, pred = process_image(
-                                    image=uploaded_file, model=model, dataset=dataset, threshold=threshold)
-                            else:
-                                # Save video logic from original code
-                                with open(f"uploads/{uploaded_file.name}", "wb") as f:
-                                    f.write(uploaded_file.read())
-                                
-                                video_path = f"uploads/{uploaded_file.name}"
-                                
-                                result, pred = process_video(
-                                    video_path, model=model, dataset=dataset, threshold=threshold, frames=frames)
-                            
-                            # Store results in session state to switch "view"
-                            st.session_state.result_data = {
-                                "result": result,
-                                "pred": pred,
-                                "file_type": file_type
-                            }
-                            st.rerun()
-                        # --- ORIGINAL LOGIC INTEGRATION END ---
-
-            # --- RESULTS SECTION (Shows after processing) ---
-            else:
-                data = st.session_state.result_data
-                result_text = data["result"]
-                probability = data["pred"]
-                
-                # Determine Colors and Icons based on result
-                if result_text == 'fake':
-                    color_class = "text-red-600"
-                    bg_class = "bg-red-50 border-red-500"
-                    icon = "fa-exclamation-triangle"
-                    title = "Deepfake Detected"
-                    desc = "This media appears to be manipulated."
-                    progress_color = "#dc2626"
-                else:
-                    color_class = "text-green-600"
-                    bg_class = "bg-green-50 border-green-500"
-                    icon = "fa-check-circle"
-                    title = "Authentic Media"
-                    desc = "No manipulation detected."
-                    progress_color = "#16a34a"
-
-                # Render HTML Result Card
-                st.markdown(f"""
-                    <div class="mb-8 p-8 rounded-xl border-4 {bg_class}">
-                        <div class="flex items-center justify-between mb-6">
-                            <div class="flex items-center space-x-4">
-                                <i class="fas {icon} text-6xl {color_class}"></i>
-                                <div>
-                                    <h2 class="text-3xl font-bold {color_class}">{title}</h2>
-                                    <p class="text-lg text-gray-600">{desc}</p>
-                                </div>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-5xl font-bold {color_class}">{probability:.2f}</div>
-                                <div class="text-gray-600">Confidence Score</div>
-                            </div>
-                        </div>
+            # Check Button logic
+            if uploaded_file is not None:
+                st.markdown("<br><br>", unsafe_allow_html=True)
+                if st.button("Check for Deepfake", use_container_width=True):
+                    # --- ORIGINAL LOGIC INTEGRATION START ---
+                    with st.spinner("Analyzing frames and extracting features..."):
+                        # This simulates the "Loading" page from HTML
+                        time.sleep(1) # Small UX pause
                         
-                        <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700">
-                          <div class="{bg_class.split()[0]} h-4 rounded-full" style="width: {probability*100}%; background-color: {progress_color}"></div>
-                        </div>
-                        <p style="text-align: center; margin-top: 10px; color: #666;">Probability: {int(probability*100)}%</p>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                # Action Buttons
-                c1, c2 = st.columns(2)
-                with c1:
-                    if st.button("Analyze Another File"):
-                        st.session_state.result_data = None
+        if file_type == "Image":
+            result, pred = process_image(
+                image=uploaded_file, model=model, dataset=dataset, threshold=threshold)
+        else:
+                            # Save video logic from original code
+            with open(f"uploads/{uploaded_file.name}", "wb") as f:
+                f.write(uploaded_file.read())
+
+            video_path = f"uploads/{uploaded_file.name}"
+
+                            result, pred = process_video(
+                                video_path, model=model, dataset=dataset, threshold=threshold, frames=frames)
+                        
+                        # Store results in session state to switch "view"
+                        st.session_state.result_data = {
+                            "result": result,
+                            "pred": pred,
+                            "file_type": file_type
+                        }
                         st.rerun()
-                with c2:
-                    st.button("Download Report (Demo)", disabled=True)
+                    # --- ORIGINAL LOGIC INTEGRATION END ---
 
-            # Close White Card
-            st.markdown('</div>', unsafe_allow_html=True)
+        # --- RESULTS SECTION (Shows after processing) ---
+else:
+            data = st.session_state.result_data
+            result_text = data["result"]
+            probability = data["pred"]
+            
+            # Determine Colors and Icons based on result
+            if result_text == 'fake':
+                color_class = "text-red-600"
+                bg_class = "bg-red-50 border-red-500"
+                icon = "fa-exclamation-triangle"
+                title = "Deepfake Detected"
+                desc = "This media appears to be manipulated."
+                progress_color = "#dc2626"
+            else:
+                color_class = "text-green-600"
+                bg_class = "bg-green-50 border-green-500"
+                icon = "fa-check-circle"
+                title = "Authentic Media"
+                desc = "No manipulation detected."
+                progress_color = "#16a34a"
 
-    # --- FOOTER SECTION ---
-    st.markdown("""
-    <div style="text-align: center; color: rgba(255,255,255,0.7); margin-top: 3rem; padding-bottom: 2rem;">
-        <p>Project by <a href="https://github.com/Sneh-T-Shah/" style="color: white; text-decoration: underline;">Sneh Shah</a> and 
-        <a href="https://github.com/pankil-soni/" style="color: white; text-decoration: underline;">Pankil Soni</a></p>
-        <p style="font-size: 0.8rem; margin-top: 0.5rem;">
-            <i class="fab fa-github"></i> <a href="https://github.com/Sneh-T-Shah/deepfake-detection" style="color: white;">View Source Code</a>
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+            # Render HTML Result Card
+            st.markdown(f"""
+                <div class="mb-8 p-8 rounded-xl border-4 {bg_class}">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center space-x-4">
+                            <i class="fas {icon} text-6xl {color_class}"></i>
+                            <div>
+                                <h2 class="text-3xl font-bold {color_class}">{title}</h2>
+                                <p class="text-lg text-gray-600">{desc}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-5xl font-bold {color_class}">{probability:.2f}</div>
+                            <div class="text-gray-600">Confidence Score</div>
+                        </div>
+                    </div>
+                    
+                    <div class="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700">
+                      <div class="{bg_class.split()[0]} h-4 rounded-full" style="width: {probability*100}%; background-color: {progress_color}"></div>
+                    </div>
+                    <p style="text-align: center; margin-top: 10px; color: #666;">Probability: {int(probability*100)}%</p>
+                </div>
+            """, unsafe_allow_html=True)
+            
+            # Action Button
+            if st.button("Analyze Another File", use_container_width=True):
+                st.session_state.result_data = None
+                st.rerun()
