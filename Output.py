@@ -1,16 +1,27 @@
 import streamlit as st
 from PIL import Image
-from api import process_image, process_video
+import time
 
-# Page configuration
+# --- 1. SETUP & CONFIGURATION ---
 st.set_page_config(
     page_title="Deepfake Detector",
-    page_icon=None,
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Professional CSS - Clean, Modern Design with MUCH LARGER TEXT AND BUTTONS
+# --- 2. DUMMY BACKEND (DELETE THIS SECTION WHEN USING YOUR ACTUAL API) ---
+# NOTE: Replace these functions with: from api import process_image, process_video
+def process_image(image, model, dataset, threshold):
+    time.sleep(2) # Simulate processing time
+    # Return 'real' or 'fake' and a probability score (0.0 to 1.0)
+    return "fake", 0.87 
+
+def process_video(video_path, model, dataset, threshold, frames):
+    time.sleep(3) # Simulate processing time
+    return "real", 0.12
+# -----------------------------------------------------------------------
+
+# --- 3. PROFESSIONAL CSS STYLING ---
 st.markdown("""
 <style>
     /* Hide Streamlit default elements */
@@ -20,931 +31,355 @@ st.markdown("""
     
     /* Import Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
     
     /* Global Styles */
     .stApp {
         background: linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%);
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        min-height: 100vh;
+        font-family: 'Inter', sans-serif;
     }
     
     /* Header Styles */
     .app-header {
         background: white;
-        border-bottom: 2px solid #e2e8f0;
-        padding: 32px 40px;
+        padding: 20px 40px;
+        border-bottom: 1px solid #e2e8f0;
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        justify-content: space-between;
         position: sticky;
         top: 0;
-        z-index: 100;
+        z-index: 99;
+    }
+    .header-logo {
+        font-size: 24px;
+        font-weight: 800;
+        background: -webkit-linear-gradient(45deg, #2563eb, #3b82f6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
     
-    .header-left {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-    
-    .logo-icon {
-        width: 56px;
-        height: 56px;
-        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-        border-radius: 14px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 28px;
-        font-weight: 700;
-    }
-    
-    .header-title {
-        font-size: 32px;
-        font-weight: 700;
-        color: #1e293b;
-        margin: 0;
-    }
-    
-    /* Increased button font sizes and padding throughout */
-    .header-link {
-        color: #0891b2;
-        text-decoration: none;
-        font-size: 18px;
-        font-weight: 600;
-        cursor: pointer;
-        padding: 12px 24px;
-        border-radius: 10px;
-        transition: all 0.2s;
-        background: white;
-        border: 2px solid #0891b2;
-    }
-    
-    .header-link:hover {
-        background: #f0f9ff;
-        transform: translateY(-2px);
-    }
-    
-    /* Hero Section with premium styling */
+    /* Hero Section */
     .hero-container {
         text-align: center;
-        padding: 140px 40px 100px;
-        max-width: 1000px;
+        padding: 100px 20px;
+        max-width: 900px;
         margin: 0 auto;
     }
-    
     .hero-title {
-        font-size: 72px;
+        font-size: 64px;
         font-weight: 800;
-        color: #0f172a;
-        margin-bottom: 28px;
-        line-height: 1.2;
-        letter-spacing: -1.5px;
+        color: #1e293b;
+        margin-bottom: 20px;
+        line-height: 1.1;
     }
-    
     .hero-subtitle {
-        font-size: 32px;
+        font-size: 28px;
+        color: #3b82f6;
         font-weight: 600;
-        color: #0891b2;
-        margin-bottom: 36px;
+        margin-bottom: 20px;
     }
-    
-    .hero-description {
-        font-size: 20px;
-        color: #475569;
-        line-height: 1.8;
-        margin-bottom: 56px;
-        max-width: 700px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    /* Main Container */
-    .main-container {
-        background: white;
-        border-radius: 24px;
-        padding: 60px;
-        margin: 40px auto;
-        max-width: 1000px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.08);
-        border: 1px solid #e2e8f0;
-    }
-    
-    .page-title {
-        font-size: 44px;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 48px;
-        text-align: center;
-    }
-    
-    /* Significantly improved upload section with larger spacing and icons */
-    .upload-section {
-        border: 3px dashed #cbd5e1;
-        border-radius: 20px;
-        padding: 100px 50px;
-        text-align: center;
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        margin-bottom: 40px;
-        transition: all 0.3s ease;
-    }
-    
-    .upload-section:hover {
-        border-color: #0891b2;
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        box-shadow: 0 12px 30px rgba(8, 145, 178, 0.15);
-    }
-    
-    .upload-icon-wrapper {
-        width: 120px;
-        height: 120px;
-        margin: 0 auto 32px;
-        background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 100%);
-        border-radius: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 12px 28px rgba(8, 145, 178, 0.2);
-    }
-    
-    .upload-icon {
-        width: 64px;
-        height: 64px;
-        color: #0891b2;
-    }
-    
-    .upload-title {
-        font-size: 32px;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 12px;
-    }
-    
-    .upload-subtitle {
+    .hero-desc {
         font-size: 18px;
         color: #64748b;
-        margin-bottom: 28px;
-        font-weight: 500;
+        margin-bottom: 40px;
+        line-height: 1.6;
     }
     
-    .success-message {
-        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-        color: #065f46;
-        padding: 20px 28px;
-        border-radius: 12px;
-        margin-top: 28px;
-        font-weight: 600;
-        font-size: 18px;
-        display: inline-flex;
-        align-items: center;
-        gap: 12px;
-        border: 2px solid #6ee7b7;
-        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2);
-    }
-    
-    /* Much larger buttons with better padding and sizing */
-    .primary-button {
-        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-        color: white;
-        padding: 20px 60px;
-        font-size: 20px;
-        font-weight: 700;
-        border: none;
-        border-radius: 14px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        width: 100%;
-        font-family: 'Inter', sans-serif;
-        box-shadow: 0 6px 20px rgba(8, 145, 178, 0.25);
-        min-height: 70px;
-    }
-    
-    .primary-button:hover:not(:disabled) {
-        background: linear-gradient(135deg, #0e7490 0%, #164e63 100%);
-        transform: translateY(-3px);
-        box-shadow: 0 12px 30px rgba(8, 145, 178, 0.35);
-    }
-    
-    .primary-button:disabled {
-        background: #cbd5e1;
-        cursor: not-allowed;
-        color: #94a3b8;
-        box-shadow: none;
-    }
-    
-    .secondary-button {
+    /* Upload Section */
+    .upload-container {
         background: white;
-        color: #0891b2;
-        padding: 20px 60px;
-        font-size: 20px;
-        font-weight: 700;
-        border: 2px solid #0891b2;
-        border-radius: 14px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        width: 100%;
-        font-family: 'Inter', sans-serif;
-        min-height: 70px;
-    }
-    
-    .secondary-button:hover {
-        background: #f0f9ff;
-        box-shadow: 0 6px 20px rgba(8, 145, 178, 0.25);
-        transform: translateY(-3px);
-    }
-    
-    /* Advanced Settings with larger fonts and better contrast */
-    .advanced-settings-content {
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border-radius: 16px;
+        border-radius: 20px;
         padding: 40px;
-        margin-top: 20px;
-        border: 1px solid #e2e8f0;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        text-align: center;
+        border: 2px dashed #cbd5e1;
+        transition: border-color 0.3s;
+        margin-bottom: 30px;
+    }
+    .upload-container:hover {
+        border-color: #3b82f6;
+    }
+    .upload-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
     }
     
-    .info-text {
-        background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 100%);
-        color: #0c4a6e;
-        padding: 20px 24px;
-        border-radius: 12px;
-        margin-top: 16px;
-        font-size: 16px;
-        line-height: 1.7;
-        border-left: 5px solid #0891b2;
-        box-shadow: 0 3px 10px rgba(8, 145, 178, 0.1);
-        font-weight: 500;
-    }
-    
-    /* Enhanced Result Card with larger text and better styling */
+    /* Result Card */
     .result-card {
         background: white;
-        border-radius: 24px;
-        padding: 80px;
-        margin: 40px 0;
-        box-shadow: 0 24px 50px rgba(0,0,0,0.1);
-        border: 4px solid;
+        border-radius: 20px;
+        padding: 40px;
         text-align: center;
-    }
-    
-    .result-card.real {
-        border-color: #10b981;
-        background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
-    }
-    
-    .result-card.fake {
-        border-color: #ef4444;
-        background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
-    }
-    
-    .result-icon {
-        font-size: 100px;
-        margin-bottom: 32px;
-    }
-    
-    .result-status {
-        font-size: 56px;
-        font-weight: 800;
-        margin-bottom: 20px;
-        letter-spacing: -1px;
-    }
-    
-    .result-label {
-        font-size: 36px;
-        font-weight: 700;
-        margin-bottom: 32px;
-    }
-    
-    .result-percentage {
-        font-size: 56px;
-        font-weight: 800;
-        margin: 40px 0;
-        letter-spacing: -1px;
-    }
-    
-    /* Larger progress bars with better sizing */
-    .progress-container {
-        margin: 48px 0;
-        padding: 48px;
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border-radius: 18px;
-        border: 1px solid #e2e8f0;
-    }
-    
-    .progress-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 32px;
-        text-align: center;
-    }
-    
-    .progress-item {
-        margin-bottom: 36px;
-    }
-    
-    .progress-label {
-        font-size: 20px;
-        font-weight: 700;
-        margin-bottom: 16px;
-        color: #0f172a;
-    }
-    
-    .progress-bar-wrapper {
-        background: #e2e8f0;
-        border-radius: 12px;
-        height: 64px;
-        overflow: hidden;
-        position: relative;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-    }
-    
-    .progress-bar-fill {
-        height: 100%;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 700;
-        font-size: 18px;
-        transition: width 0.5s ease;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    
-    /* Larger loading spinner and text */
-    .spinner-container {
-        text-align: center;
-        padding: 120px 40px;
-    }
-    
-    .spinner {
-        border: 6px solid #e2e8f0;
-        border-top: 6px solid #0891b2;
-        border-radius: 50%;
-        width: 100px;
-        height: 100px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 40px;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    
-    .loading-text {
-        font-size: 32px;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 12px;
-    }
-    
-    .loading-subtext {
-        font-size: 20px;
-        color: #64748b;
-        font-weight: 500;
-    }
-    
-    .loading-status {
-        font-size: 16px;
-        color: #0891b2;
-        font-weight: 600;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
         margin-top: 20px;
     }
-    
-    /* Modal Styles */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        backdrop-filter: blur(4px);
+    .result-real {
+        border-top: 8px solid #10b981;
     }
-    
-    .modal-content {
-        background: white;
-        border-radius: 24px;
-        padding: 48px;
-        max-width: 600px;
-        width: 90%;
-        max-height: 80vh;
-        overflow-y: auto;
-        box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-        position: relative;
-        animation: modalFadeIn 0.2s ease;
+    .result-fake {
+        border-top: 8px solid #ef4444;
     }
-    
-    @keyframes modalFadeIn {
-        from {
-            opacity: 0;
-            transform: scale(0.95);
-        }
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-    
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 36px;
-    }
-    
-    .modal-title {
+    .prediction-text {
         font-size: 36px;
-        font-weight: 700;
-        color: #0f172a;
-        margin: 0;
-    }
-    
-    .modal-close-btn {
-        background: #f1f5f9;
-        border: none;
-        font-size: 32px;
-        color: #64748b;
-        cursor: pointer;
-        padding: 10px 14px;
-        border-radius: 10px;
-        transition: all 0.2s;
-        font-weight: 600;
-        line-height: 1;
-    }
-    
-    .modal-close-btn:hover {
-        background: #e2e8f0;
-        color: #0f172a;
-    }
-    
-    /* Enhanced Step Items with larger, clearer styling */
-    .step-item {
-        padding: 32px;
+        font-weight: 800;
         margin: 20px 0;
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        border-radius: 16px;
-        border: 2px solid #cffafe;
-        box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
     }
     
-    .step-number {
-        font-size: 20px;
-        font-weight: 700;
-        color: #0891b2;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
+    /* Custom Progress Bar */
+    .custom-progress-bg {
+        background-color: #e2e8f0;
+        border-radius: 10px;
+        height: 25px;
+        width: 100%;
+        overflow: hidden;
+        margin-top: 10px;
+    }
+    .custom-progress-fill {
+        height: 100%;
+        text-align: right;
+        padding-right: 10px;
+        line-height: 25px;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+        transition: width 1s ease-in-out;
     }
     
-    .step-description {
-        font-size: 18px;
-        color: #0c4a6e;
-        line-height: 1.8;
-        font-weight: 500;
-    }
-    
-    /* Streamlit Component Overrides with larger fonts */
-    .stRadio > div {
-        flex-direction: row;
-        gap: 20px;
-    }
-    
-    .stRadio > div > label {
-        font-size: 20px;
-        padding: 14px 28px;
+    /* Buttons */
+    .stButton > button {
         border-radius: 12px;
-        border: 2px solid #e2e8f0;
-        background: white;
-        transition: all 0.2s;
+        padding: 0.75rem 2rem;
         font-weight: 600;
+        border: none;
+        transition: all 0.2s;
     }
     
-    .stRadio > div > label:hover {
-        border-color: #0891b2;
-        background: #f0f9ff;
+    /* Info Box */
+    .info-box {
+        background-color: #eff6ff;
+        border-left: 5px solid #3b82f6;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+        font-size: 14px;
+        color: #1e3a8a;
     }
     
-    .stExpander {
-        border: 2px solid #e2e8f0;
-        border-radius: 14px;
-        margin: 28px 0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    /* Step Styling for Modal */
+    .step-card {
+        background: #f8fafc;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #e2e8f0;
     }
-    
-    .stExpander > summary {
-        font-size: 22px;
+    .step-title {
         font-weight: 700;
         color: #0f172a;
-        padding: 18px 24px;
     }
-    
-    .stSelectbox label,
-    .stSlider label {
-        font-size: 18px;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 12px;
-    }
-    
-    .stFileUploader {
-        margin-top: 28px;
-    }
-</style>
 
+</style>
 """, unsafe_allow_html=True)
 
-# Initialize session state
+# --- 4. SESSION STATE INITIALIZATION ---
 if 'page' not in st.session_state:
     st.session_state.page = 'hero'
-if 'file_uploaded' not in st.session_state:
-    st.session_state.file_uploaded = False
 if 'uploaded_file' not in st.session_state:
     st.session_state.uploaded_file = None
-if 'file_type' not in st.session_state:
-    st.session_state.file_type = 'Image'
-if 'show_result' not in st.session_state:
-    st.session_state.show_result = False
 if 'result' not in st.session_state:
     st.session_state.result = None
-if 'pred' not in st.session_state:
-    st.session_state.pred = None
-if 'model' not in st.session_state:
-    st.session_state.model = 'EfficientNetAutoAttB4'
-if 'dataset' not in st.session_state:
-    st.session_state.dataset = 'DFDC'
-if 'threshold' not in st.session_state:
-    st.session_state.threshold = 0.5
-if 'frames' not in st.session_state:
-    st.session_state.frames = 50
+if 'pred_score' not in st.session_state:
+    st.session_state.pred_score = 0.0
 if 'show_modal' not in st.session_state:
     st.session_state.show_modal = False
 
-# Header Component (shown on main and result pages)
-def render_header():
-    header_col1, header_col2 = st.columns([3, 1])
-    with header_col1:
-        st.markdown("""
-        <div class="header-left">
-            <div class="logo-icon">DF</div>
-            <h1 class="header-title">Deepfake Detector</h1>
-        </div>
-        """, unsafe_allow_html=True)
-    with header_col2:
-        st.markdown('<div style="text-align: right; padding-top: 12px;">', unsafe_allow_html=True)
-        if st.button("📖 How It Works", key="how_it_works_btn", use_container_width=True):
-            st.session_state.show_modal = True
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+# --- 5. HELPER FUNCTIONS ---
+def reset_app():
+    st.session_state.page = 'hero'
+    st.session_state.uploaded_file = None
+    st.session_state.result = None
 
-# Modal Component
-def render_modal():
-    if st.session_state.show_modal:
-        st.markdown("""
-        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-                    background: rgba(0, 0, 0, 0.6); z-index: 9999; 
-                    display: flex; align-items: center; justify-content: center;">
-        </div>
-        """, unsafe_allow_html=True)
-        
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            st.markdown("""
-            <div style="background: white; border-radius: 24px; padding: 48px; 
-                        box-shadow: 0 25px 50px rgba(0,0,0,0.25); 
-                        position: relative; z-index: 10000; margin-top: -200px;">
-                <h2 class="modal-title">How It Works</h2>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown("""
-            <div style="background: white; border-radius: 24px; padding: 0 48px 48px; 
-                        box-shadow: 0 25px 50px rgba(0,0,0,0.25); 
-                        position: relative; z-index: 10000; margin-top: -16px;">
-                <div class="step-item">
-                    <div class="step-number">📤 Step 1: Upload</div>
-                    <div class="step-description">Select an image or video file from your device to analyze for deepfake manipulation.</div>
-                </div>
-                <div class="step-item">
-                    <div class="step-number">🔍 Step 2: Analyze</div>
-                    <div class="step-description">Our AI system extracts frames and features from your media, examining patterns and anomalies that indicate manipulation.</div>
-                </div>
-                <div class="step-item">
-                    <div class="step-number">✅ Step 3: Predict</div>
-                    <div class="step-description">Advanced deep learning models analyze the extracted features to determine whether the content is authentic or has been manipulated.</div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            if st.button("Close", key="close_modal", use_container_width=True, type="primary"):
-                st.session_state.show_modal = False
-                st.rerun()
+def go_to_main():
+    st.session_state.page = 'main'
 
-# Hero Page
+def show_modal():
+    st.session_state.show_modal = True
+
+def close_modal():
+    st.session_state.show_modal = False
+
+# --- 6. PAGE: HERO SECTION ---
 if st.session_state.page == 'hero':
-    st.markdown("""
-    <div class="hero-container">
-        <h1 class="hero-title">Deepfake Detector</h1>
-        <h2 class="hero-subtitle">Detect AI-generated images and videos</h2>
-        <p class="hero-description">
-            Upload an image or video to check if it has been manipulated using deepfake techniques. 
-            Our advanced AI models analyze your media with state-of-the-art precision to provide accurate detection results.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="hero-container">', unsafe_allow_html=True)
+    st.markdown('<div class="hero-title">Deepfake Detector</div>', unsafe_allow_html=True)
+    st.markdown('<div class="hero-subtitle">Detect AI-generated images and videos</div>', unsafe_allow_html=True)
+    st.markdown('<p class="hero-desc">Upload an image or video to check if it has been manipulated using deepfake techniques. Our advanced AI models analyze your media with state-of-the-art precision.</p>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        if st.button("🚀 Get Started", key="start_button", use_container_width=True, type="primary"):
-            st.session_state.page = 'main'
+        if st.button("Get Started", use_container_width=True, type="primary"):
+            go_to_main()
             st.rerun()
-
-# Main Page
-elif st.session_state.page == 'main':
-    render_header()
-    render_modal()
-    
-    st.markdown('<div class="main-container">', unsafe_allow_html=True)
-    
-    st.markdown('<h1 class="page-title">Upload & Analyze</h1>', unsafe_allow_html=True)
-    
-    # File Type Selection
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        file_type = st.radio(
-            "Select file type:",
-            ("Image", "Video"),
-            horizontal=True,
-            key="file_type_radio",
-            index=0 if st.session_state.file_type == 'Image' else 1,
-            label_visibility="visible"
-        )
-        if file_type != st.session_state.file_type:
-            st.session_state.uploaded_file = None
-            st.session_state.file_uploaded = False
-        st.session_state.file_type = file_type
-    
-    # Upload Section
-    st.markdown('<div class="upload-section">', unsafe_allow_html=True)
-    
-    if file_type == "Image":
-        upload_text = "Upload Image"
-        accepted_types = ["jpg", "jpeg", "png"]
-        icon_svg = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>'
-    else:
-        upload_text = "Upload Video"
-        accepted_types = ["mp4"]
-        icon_svg = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>'
-    
-    st.markdown(f"""
-    <div class="upload-icon-wrapper">
-        <div class="upload-icon">{icon_svg}</div>
-    </div>
-    <h3 class="upload-title">{upload_text}</h3>
-    <p class="upload-subtitle">Supported formats: {', '.join(accepted_types).upper()} • Max size: 100MB</p>
-    """, unsafe_allow_html=True)
-    
-    uploaded_file = st.file_uploader(
-        f"Choose a {file_type.lower()}...",
-        type=accepted_types,
-        key="file_uploader",
-        label_visibility="collapsed"
-    )
-    
-    if uploaded_file is not None:
-        st.session_state.uploaded_file = uploaded_file
-        st.session_state.file_uploaded = True
-        
-        st.markdown("""
-        <div class="success-message">
-            ✅ File uploaded successfully
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if file_type == "Image":
-            try:
-                image = Image.open(uploaded_file)
-                st.image(image, caption="Uploaded Image", use_container_width=True)
-            except Exception as e:
-                st.error(f"Error: Invalid file type")
-        else:
-            st.video(uploaded_file)
-    else:
-        st.session_state.file_uploaded = False
-        st.session_state.show_result = False
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Advanced Settings
-    with st.expander("⚙️ Advanced Settings", expanded=False):
-        st.markdown('<div class="advanced-settings-content">', unsafe_allow_html=True)
-        
-        model_options = ("EfficientNetB4", "EfficientNetB4ST", "EfficientNetAutoAttB4", "EfficientNetAutoAttB4ST")
-        model_index = model_options.index(st.session_state.model) if st.session_state.model in model_options else 2
-        model = st.selectbox(
-            "Model",
-            model_options,
-            index=model_index,
-            key="model_select"
-        )
-        st.session_state.model = model
-        st.markdown("""
-        <div class="info-text">
-            <strong>🤖 Model:</strong> Choose the AI model used for detection. EfficientNetAutoAttB4 is recommended for best accuracy.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        dataset = st.radio(
-            "Dataset",
-            ("DFDC", "FFPP"),
-            index=0 if st.session_state.dataset == 'DFDC' else 1,
-            key="dataset_radio",
-            horizontal=True
-        )
-        st.session_state.dataset = dataset
-        st.markdown("""
-        <div class="info-text">
-            <strong>📊 Dataset:</strong> Select the training dataset. DFDC (Deepfake Detection Challenge) is recommended for general use.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        threshold = st.slider(
-            "Threshold",
-            0.0, 1.0, st.session_state.threshold,
-            key="threshold_slider",
-            step=0.01
-        )
-        st.session_state.threshold = threshold
-        st.markdown(f"""
-        <div class="info-text">
-            <strong>📈 Threshold:</strong> Set the sensitivity level (Current: {threshold:.2f}). Lower values are more sensitive to deepfakes, higher values require stronger evidence.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        if file_type == "Video":
-            frames = st.slider(
-                "Number of Frames",
-                0, 100, st.session_state.frames,
-                key="frames_slider"
-            )
-            st.session_state.frames = frames
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Analyze Button
-    st.markdown('<br>', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        check_disabled = not st.session_state.file_uploaded
-        
-        if st.button(
-            "🔬 Analyze Media",
-            disabled=check_disabled,
-            use_container_width=True,
-            key="check_button",
-            type="primary"
-        ):
-            st.session_state.show_result = True
-            st.session_state.page = 'result'
-            st.rerun()
-    
-    if check_disabled:
-        st.info("⬆️ Please upload a file to continue")
-    
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Result Page
-elif st.session_state.page == 'result':
-    render_header()
-    render_modal()
-    
-    st.markdown('<div class="main-container">', unsafe_allow_html=True)
-    
-    if st.session_state.uploaded_file is not None and st.session_state.result is None:
-        loading_placeholder = st.empty()
-        loading_placeholder.markdown("""
-        <div class="spinner-container">
-            <div class="spinner"></div>
-            <div class="loading-text">Analyzing your file</div>
-            <div class="loading-subtext">This may take a few moments. Please wait.</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        try:
-            if st.session_state.file_type == "Image":
-                result, pred = process_image(
-                    image=st.session_state.uploaded_file,
-                    model=st.session_state.model,
-                    dataset=st.session_state.dataset,
-                    threshold=st.session_state.threshold
-                )
-            else:
-                with open(f"uploads/{st.session_state.uploaded_file.name}", "wb") as f:
-                    f.write(st.session_state.uploaded_file.read())
-                
-                video_path = f"uploads/{st.session_state.uploaded_file.name}"
-                
-                result, pred = process_video(
-                    video_path=video_path,
-                    model=st.session_state.model,
-                    dataset=st.session_state.dataset,
-                    threshold=st.session_state.threshold,
-                    frames=st.session_state.frames
-                )
-            
-            st.session_state.result = result
-            st.session_state.pred = pred
-            loading_placeholder.empty()
-        except Exception as e:
-            loading_placeholder.empty()
-            st.error(f"Error processing file: {str(e)}")
-            if st.button("Go Back", key="error_back", type="secondary", use_container_width=True):
-                st.session_state.page = 'main'
-                st.session_state.result = None
-                st.session_state.pred = None
+# --- 7. MAIN & RESULT LOGIC ---
+else:
+    # -- HEADER --
+    header_col1, header_col2 = st.columns([4, 1])
+    with header_col1:
+        st.markdown('<div class="header-logo"> DF Detector</div>', unsafe_allow_html=True)
+    with header_col2:
+        if st.button("How It Works"):
+            show_modal()
+
+    # -- MODAL (HOW IT WORKS) --
+    if st.session_state.show_modal:
+        with st.expander("How It Works", expanded=True):
+            st.markdown("""
+            <div class="step-card"><span class="step-title">1. Upload:</span> Select an image or video file.</div>
+            <div class="step-card"><span class="step-title">2. Analyze:</span> Our AI extracts frames and scans for artifacts.</div>
+            <div class="step-card"><span class="step-title">3. Predict:</span> The model calculates a probability score.</div>
+            """, unsafe_allow_html=True)
+            if st.button("Close Help"):
+                close_modal()
                 st.rerun()
-            st.stop()
-    
-    if st.session_state.result is not None and st.session_state.pred is not None:
+
+    # -- PAGE: MAIN (UPLOAD & SETTINGS) --
+    if st.session_state.page == 'main':
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Two column layout for upload and settings
+        main_col1, main_col2 = st.columns([2, 1])
+        
+        with main_col1:
+            st.markdown("### 📤 Upload Media")
+            file_type = st.radio("File Type", ["Image", "Video"], horizontal=True, label_visibility="collapsed")
+            
+            # Dynamic File Uploader
+            st.markdown('<div class="upload-container">', unsafe_allow_html=True)
+            if file_type == "Image":
+                st.markdown('<div class="upload-icon"></div>', unsafe_allow_html=True)
+                uploaded_file = st.file_uploader("Choose an image...", type=['jpg', 'jpeg', 'png'])
+            else:
+                st.markdown('<div class="upload-icon">🎥</div>', unsafe_allow_html=True)
+                uploaded_file = st.file_uploader("Choose a video...", type=['mp4'])
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            if uploaded_file:
+                st.session_state.uploaded_file = uploaded_file
+                st.success(f" {uploaded_file.name} uploaded successfully!")
+                
+                # Preview
+                if file_type == "Image":
+                    st.image(uploaded_file, caption="Preview", width=300)
+                else:
+                    st.video(uploaded_file)
+            
+        with main_col2:
+            st.markdown("### ⚙️ Settings")
+            with st.expander("Advanced Configuration", expanded=True):
+                model_choice = st.selectbox("Select Model", ["EfficientNetB4", "EfficientNetAutoAttB4", "ResNext50"], index=1)
+                st.markdown('<div class="info-box">AutoAttB4 is recommended for highest accuracy on facial artifacts.</div>', unsafe_allow_html=True)
+                
+                dataset_choice = st.radio("Dataset", ["DFDC (General)", "FFPP (FaceSwap)"])
+                st.markdown('<div class="info-box">DFDC is better for general deepfakes.</div>', unsafe_allow_html=True)
+                
+                threshold = st.slider("Sensitivity Threshold", 0.1, 0.9, 0.5)
+                st.markdown('<div class="info-box">Lower threshold = stricter detection.</div>', unsafe_allow_html=True)
+                
+                if file_type == "Video":
+                    frames = st.slider("Frames to Analyze", 10, 100, 20)
+
+        # Analyze Button
+        st.markdown("<hr>", unsafe_allow_html=True)
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            analyze_btn = st.button("🔍 Check for Deepfake", type="primary", use_container_width=True, disabled=(st.session_state.uploaded_file is None))
+        
+        if analyze_btn:
+            with st.spinner("Analyzing media features... Please wait."):
+                # Call the processing function (Mocked or Real)
+                try:
+                    if file_type == "Image":
+                        result, score = process_image(st.session_state.uploaded_file, model_choice, dataset_choice, threshold)
+                    else:
+                        # For video, you normally need to save it to disk first
+                        with open("temp_video.mp4", "wb") as f:
+                            f.write(st.session_state.uploaded_file.getbuffer())
+                        result, score = process_video("temp_video.mp4", model_choice, dataset_choice, threshold, frames if 'frames' in locals() else 20)
+                    
+                    st.session_state.result = result
+                    st.session_state.pred_score = score
+                    st.session_state.page = 'result'
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
+
+    # -- PAGE: RESULT --
+    elif st.session_state.page == 'result':
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Result Variables
         is_real = st.session_state.result == 'real'
-        result_class = 'real' if is_real else 'fake'
-        result_color = '#10b981' if is_real else '#ef4444'
-        result_text = '✅ AUTHENTIC' if is_real else '⚠️ DEEPFAKE DETECTED'
-        result_icon = '✅' if is_real else '🚨'
+        score = st.session_state.pred_score
         
-        deepfake_percentage = st.session_state.pred * 100
-        real_percentage = (1 - st.session_state.pred) * 100
-        
+        # Calculate percentages
+        if is_real:
+            confidence = (1 - score) * 100 # Assuming score is "fake" probability
+            main_color = "#10b981" # Green
+            icon = "✅"
+            status = "AUTHENTIC"
+            card_class = "result-real"
+        else:
+            confidence = score * 100
+            main_color = "#ef4444" # Red
+            icon = "🚨"
+            status = "DEEPFAKE DETECTED"
+            card_class = "result-fake"
+
+        # Result Card
         st.markdown(f"""
-        <div class="result-card {result_class}">
-            <div class="result-icon">{result_icon}</div>
-            <div class="result-status" style="color: {result_color};">{result_text}</div>
-            <div class="result-percentage" style="color: {result_color};">
-                {real_percentage:.1f}% Real / {deepfake_percentage:.1f}% Deepfake
-            </div>
+        <div class="result-card {card_class}">
+            <div style="font-size: 80px;">{icon}</div>
+            <div class="prediction-text" style="color: {main_color};">{status}</div>
+            <div style="font-size: 24px; color: #64748b;">Confidence Score</div>
+            <div style="font-size: 56px; font-weight: 800; color: #1e293b;">{confidence:.1f}%</div>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.markdown('<div class="progress-container">', unsafe_allow_html=True)
-        st.markdown('<div class="progress-title">Confidence Breakdown</div>', unsafe_allow_html=True)
-        
+
+        # Visual Gauge / Progress Bar
+        st.markdown("### Analysis Breakdown")
         col1, col2 = st.columns(2)
         
         with col1:
+            st.markdown("**Real Probability**")
+            real_score = (1-score)*100
             st.markdown(f"""
-            <div class="progress-item">
-                <div class="progress-label">✅ Real Content</div>
-                <div class="progress-bar-wrapper">
-                    <div class="progress-bar-fill" style="background: linear-gradient(90deg, #10b981 0%, #059669 100%); width: {real_percentage}%;">
-                        {real_percentage:.1f}%
-                    </div>
-                </div>
+            <div class="custom-progress-bg">
+                <div class="custom-progress-fill" style="width: {real_score}%; background-color: #10b981;">{real_score:.1f}%</div>
             </div>
             """, unsafe_allow_html=True)
-        
-        with col2:
-            st.markdown(f"""
-            <div class="progress-item">
-                <div class="progress-label">⚠️ Deepfake Content</div>
-                <div class="progress-bar-wrapper">
-                    <div class="progress-bar-fill" style="background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); width: {deepfake_percentage}%;">
-                        {deepfake_percentage:.1f}%
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-        
-        st.markdown('<br><br>', unsafe_allow_html=True)
-        
-        col1, col2, col3 = st.columns([1, 2, 1])
-        with col2:
-            if st.button("🔄 Analyze Another File", use_container_width=True, key="analyze_another", type="primary"):
-                st.session_state.page = 'main'
-                st.session_state.file_uploaded = False
-                st.session_state.uploaded_file = None
-                st.session_state.show_result = False
-                st.session_state.result = None
-                st.session_state.pred = None
-                st.rerun()
             
-            if st.button("🏠 Back to Home", use_container_width=True, key="back_home", type="secondary"):
-                st.session_state.page = 'hero'
-                st.session_state.file_uploaded = False
+        with col2:
+            st.markdown("**Fake Probability**")
+            fake_score = score*100
+            st.markdown(f"""
+            <div class="custom-progress-bg">
+                <div class="custom-progress-fill" style="width: {fake_score}%; background-color: #ef4444;">{fake_score:.1f}%</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        
+        # Action Buttons
+        btn_col1, btn_col2 = st.columns(2)
+        with btn_col1:
+            if st.button("Analyze Another File", use_container_width=True):
                 st.session_state.uploaded_file = None
-                st.session_state.show_result = False
                 st.session_state.result = None
-                st.session_state.pred = None
+                st.session_state.page = 'main'
                 st.rerun()
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+        with btn_col2:
+            if st.button("Back to Home", use_container_width=True, type="secondary"):
+                reset_app()
+                st.rerun()
