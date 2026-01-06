@@ -15,8 +15,10 @@ st.set_page_config(
 # --- Session State Management ---
 if 'page' not in st.session_state:
     st.session_state.page = 'hero'
+
 if 'result_data' not in st.session_state:
     st.session_state.result_data = None
+
 if 'file_type' not in st.session_state:
     st.session_state.file_type = "Image"
 
@@ -25,167 +27,143 @@ if not os.path.exists("uploads"):
     os.makedirs("uploads")
 
 # --- CSS & Styling Injection ---
-st.markdown("""
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+st.markdown(
+    """
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif;
-}
+        html, body, [class*="css"] {
+            font-family: 'Inter', sans-serif;
+        }
 
-h1, h2, h3, h4, h5, h6, span, div, label, p {
-    color: #0f172a !important;
-}
+        h1, h2, h3, h4, h5, h6, span, div, label, p {
+            color: #0f172a !important;
+        }
 
-.stApp {
-    background: linear-gradient(180deg, #FFFBF0 0%, #FFF5E6 100%);
-}
+        .stApp {
+            background: linear-gradient(180deg, #FFFBF0 0%, #FFF5E6 100%);
+            background-attachment: fixed;
+        }
 
-header, footer, #MainMenu {
-    visibility: hidden;
-}
+        header, footer, #MainMenu {
+            visibility: hidden;
+        }
 
-/* ---------- HERO ---------- */
-.hero-title {
-    font-size: 8rem !important;
-    font-weight: 900 !important;
-    color: #1e3a8a !important;
-}
+        .hero-title {
+            font-size: 8rem !important;
+            font-weight: 900 !important;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            color: #1e3a8a !important;
+            text-shadow: 2px 2px 0px rgba(255,255,255,0.5);
+            margin-bottom: 1rem;
+        }
 
-.hero-subtitle {
-    font-size: 3.5rem !important;
-    font-weight: 700 !important;
-}
+        .hero-subtitle {
+            font-size: 3.5rem !important;
+            font-weight: 700 !important;
+            color: #334155 !important;
+            margin-bottom: 3rem;
+        }
 
-/* ---------- BUTTONS ---------- */
-.stButton button {
-    background: linear-gradient(135deg, #e05252 0%, #c53030 100%) !important;
-    color: white !important;
-    padding: 3rem 2rem !important;
-    border-radius: 2rem !important;
-    font-size: 3rem !important;
-    font-weight: 900 !important;
-}
+        .stButton button {
+            background: linear-gradient(135deg, #e05252 0%, #c53030 100%) !important;
+            color: white !important;
+            border: none;
+            padding: 3rem 2rem !important;
+            border-radius: 4rem !important;
+            font-weight: 900 !important;
+            font-size: 8rem !important;
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
 
-/* ---------- RADIO BUTTONS (IMAGE / VIDEO HUGE) ---------- */
-.stRadio label {
-    font-size: 4rem !important;
-    padding: 3rem 6rem !important;
-    background: rgba(255,255,255,0.9);
-    border-radius: 4rem;
-    border: 5px solid #94a3b8;
-}
+        .stButton button p {
+            color: white !important;
+            font-size: 8rem !important;
+        }
 
-.stRadio input {
-    transform: scale(3);
-}
+        .stButton button:hover {
+            transform: scale(1.02);
+            box-shadow:0 20px 35px rgba(255,255,255,0.15);
+        }
 
-/* ---------- FILE UPLOADER ---------- */
-[data-testid="stFileUploader"] {
-    min-height: 20rem !important;
-    padding: 6rem 4rem !important;
-    border: 6px dashed #64748b;
-    border-radius: 2rem;
-    background: rgba(255,255,255,0.7);
-}
+        [data-testid="stFileUploader"] {
+            padding: 4rem 2rem !important;
+            background-color: rgba(255,255,255,0.6);
+            border: 6.5px dashed #64748b;
+            border-radius: 4rem;
+        }
 
-/* Drop your image/video here */
-[data-testid="stFileUploader"] label {
-    font-size: 3rem !important;
-    font-weight: 800 !important;
-}
+        .stRadio > div {
+            flex-direction: row;
+            gap: 50px;
+            justify-content: center;
+        }
 
-/* Drag & drop text */
-[data-testid="stFileUploader"] div div {
-    font-size: 2.5rem !important;
-    color: #1e40af !important;
-    font-weight: 700;
-}
+        .streamlit-expanderHeader {
+            font-size: 25rem !important;
+            font-weight: 700 !important;
+            background-color: rgba(255,255,255,0.5);
+            border-radius: 2rem;
+            padding: 1.5rem !important;
+        }
 
-/* ---------- ADVANCED SETTINGS ---------- */
-.streamlit-expanderHeader {
-    font-size: 6rem !important;
-    font-weight: 900 !important;
-    background: rgba(255,255,255,0.8);
-}
+        button[title="View fullscreen"] {
+            display: none;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-/* Prevent black background */
-.streamlit-expanderContent {
-    background: rgba(255,255,255,0.95) !important;
-    color: #0f172a !important;
-}
-
-/* Remove empty white box */
-.streamlit-expanderContent > div:empty {
-    display: none !important;
-}
-
-/* ---------- SELECT MODEL ---------- */
-.stSelectbox label {
-    font-size: 4rem !important;
-    font-weight: 800;
-}
-
-.stSelectbox div[data-baseweb="select"] {
-    font-size: 3rem !important;
-    min-height: 6rem !important;
-}
-
-.stSelectbox div[data-baseweb="select"] span {
-    color: #1e3a8a !important;
-    font-weight: 700;
-}
-
-/* ---------- DATASET (DFDC / FFPP) ---------- */
-.stRadio div[role="radiogroup"] label {
-    font-size: 3.5rem !important;
-    padding: 2.5rem 4rem !important;
-}
-
-/* ---------- SLIDERS ---------- */
-.stSlider label {
-    font-size: 4rem !important;
-    font-weight: 800;
-}
-
-.stSlider div[data-baseweb="slider"] {
-    padding: 3rem 0 !important;
-}
-
-button[title="View fullscreen"] {
-    display: none;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# --- Navigation ---
+# --- Helper Functions ---
 def go_to_main():
     st.session_state.page = 'main'
 
+def go_to_hero():
+    st.session_state.page = 'hero'
+    st.session_state.result_data = None
+
 # --- HERO PAGE ---
 if st.session_state.page == 'hero':
-    _, mid, _ = st.columns([1, 10, 1])
-    with mid:
-        st.markdown("""
-        <div style="text-align:center; padding-top:15vh;">
-            <h1 class="hero-title">Deepfake<br>Detector</h1>
-            <h2 class="hero-subtitle">Detect AI-generated images and videos</h2>
-            <p style="font-size:2rem;">
-                Upload an image or video to check if it has been manipulated.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 10, 1])
 
-        st.button("START DETECTING ➜", on_click=go_to_main, use_container_width=True)
+    with col2:
+        st.markdown(
+            """
+            <div style="text-align:center; padding-top:15vh;">
+                <h1 class="hero-title">Deepfake<br>Detector</h1>
+                <h2 class="hero-subtitle">Detect AI-generated images and videos</h2>
+                <p style="font-size:2rem; max-width:70rem; margin:auto;">
+                    Upload an image or video to check if it has been manipulated using deepfake techniques.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        _, mid, _ = st.columns([1, 4, 1])
+        with mid:
+            st.button("START DETECTING ➜", on_click=go_to_main, use_container_width=True)
 
 # --- MAIN PAGE ---
-else:
-    _, content, _ = st.columns([1, 10, 1])
-    with content:
+elif st.session_state.page in ['main', 'results']:
+    st.markdown(
+        """
+        <div style="text-align:center; margin:2rem 0;">
+            <h1 style="font-size:5rem; font-weight:900;">Deepfake Detector</h1>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
+    _, content, _ = st.columns([1, 10, 1])
+
+    with content:
         if st.session_state.result_data is None:
             file_type = st.radio(
                 "Select File Type",
@@ -239,6 +217,15 @@ else:
 
                 st.session_state.result_data = {
                     "result": result,
-                    "pred": pred
+                    "pred": pred,
+                    "file_type": file_type
                 }
+                st.rerun()
+
+        else:
+            data = st.session_state.result_data
+            st.write(data)
+
+            if st.button("ANALYZE ANOTHER FILE"):
+                st.session_state.result_data = None
                 st.rerun()
