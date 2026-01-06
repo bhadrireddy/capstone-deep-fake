@@ -171,10 +171,31 @@ st.markdown("""
             color: #0f172a !important;
         }
 
-        .stSelectbox label::after {
-            content: " ▼";
-            font-size: 1.2rem;
+        div[data-baseweb="select"] {
+            position: relative;
+        }
+
+        div[data-baseweb="select"] > div:first-child::after {
+            content: "▼";
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
             color: #0f172a;
+            font-size: 1rem;
+        }
+
+        .stSlider > div > div {
+            background-color: #e2e8f0 !important;
+        }
+
+        .stSlider > div > div > div {
+            background-color: #0f172a !important;
+        }
+
+        .stSlider [role="slider"] {
+            background-color: #0f172a !important;
         }
 
         [data-testid="stFileUploader"] label {
