@@ -48,7 +48,7 @@ st.markdown("""
         header, footer, #MainMenu { visibility: hidden; }
 
         .hero-title {
-            font-size: 6rem !important;
+            font-size: 8rem !important;
             font-weight: 900 !important;
             color: #1e3a8a !important;
         }
@@ -64,7 +64,7 @@ st.markdown("""
             color: white !important;
             padding: 3rem 2rem !important;
             border-radius: 2rem !important;
-            font-size: 15rem !important;
+            font-size: 3rem !important;
             font-weight: 900 !important;
             width: 100%;
         }
@@ -87,7 +87,7 @@ st.markdown("""
         }
 
         .streamlit-expanderHeader {
-            font-size: 8.5rem !important;
+            font-size: 3.5rem !important;
             font-weight: 800 !important;
             background-color: rgba(255,255,255,0.9) !important;
         }
@@ -183,12 +183,12 @@ st.markdown("""
             transform: translateY(-50%);
             pointer-events: none;
             color: #0f172a;
-            font-size: 4rem;
+            font-size: 1rem;
         }
 
         .stSlider > div > div {
             background-color: #e2e8f0 !important;
-            height: 1px !important;
+            height: 8px !important;
             border-radius: 4px !important;
             border: none !important;
             box-shadow: none !important;
@@ -347,5 +347,3 @@ elif st.session_state.page in ["main", "results"]:
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
-
-
