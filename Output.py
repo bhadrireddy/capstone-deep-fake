@@ -112,6 +112,27 @@ st.markdown("""
             background-color: #ffffff !important;
         }
 
+        [data-testid="stExpander"] * {
+            background-color: #ffffff !important;
+        }
+
+        [data-testid="stExpander"] label {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+
+        [data-testid="stExpander"] .stSelectbox {
+            background-color: #ffffff !important;
+        }
+
+        [data-testid="stExpander"] .stRadio {
+            background-color: #ffffff !important;
+        }
+
+        [data-testid="stExpander"] .stSlider {
+            background-color: #ffffff !important;
+        }
+
         .stSelectbox > div > div {
             background-color: #ffffff !important;
         }
@@ -148,6 +169,19 @@ st.markdown("""
         li[role="option"] {
             background-color: #ffffff !important;
             color: #0f172a !important;
+        }
+
+        .stSelectbox label::after {
+            content: " ▼";
+            font-size: 1.2rem;
+            color: #0f172a;
+        }
+
+        [data-testid="stFileUploader"] label {
+            border: 2px solid #000000 !important;
+            border-radius: 1rem !important;
+            padding: 0.5rem 1rem !important;
+            display: inline-block !important;
         }
     </style>
 """, unsafe_allow_html=True)
