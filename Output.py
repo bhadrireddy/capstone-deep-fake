@@ -190,6 +190,13 @@ st.markdown("""
             background-color: #e2e8f0 !important;
             height: 8px !important;
             border-radius: 4px !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .stSlider > div {
+            background-color: transparent !important;
+            border: none !important;
         }
 
         .stSlider > div > div > div {
