@@ -119,28 +119,28 @@ st.markdown("""
             justify-content: center;
         }
         .stRadio label {
-            font-size: 3rem !important; /* Huge Radio Text */
-            padding: 1rem 3rem !important;
+            font-size: 10rem !important; /* Huge Radio Text */
+            padding: 3rem 5rem !important;
             background-color: rgba(255,255,255,0.5);
-            border: 2px solid #cbd5e1;
-            border-radius: 1.5rem;
+            border: 5px solid #cbd5e1;
+            border-radius: 5.5rem;
             cursor: pointer;
         }
         
         /* Select Box (Dropdowns) */
         .stSelectbox label {
-            font-size: 2rem !important;
-            margin-bottom: 1rem !important;
+            font-size: 10rem !important;
+            margin-bottom: 5rem !important;
         }
         .stSelectbox div[data-baseweb="select"] > div {
-            font-size: 1.8rem !important;
-            min-height: 5rem !important; /* Taller dropdown */
-            padding-top: 1rem;
+            font-size: 9.8rem !important;
+            min-height: 15rem !important; /* Taller dropdown */
+            padding-top: 5rem;
         }
         
         /* Sliders */
         .stSlider label {
-            font-size: 2rem !important;
+            font-size: 15rem !important;
         }
         .stSlider div[data-baseweb="slider"] {
             padding-top: 1.5rem;
@@ -149,7 +149,7 @@ st.markdown("""
         
         /* Expander (Advanced Settings) */
         .streamlit-expanderHeader {
-            font-size: 2rem !important;
+            font-size: 25rem !important;
             font-weight: 700 !important;
             background-color: rgba(255,255,255,0.5);
             border-radius: 1rem;
@@ -183,7 +183,7 @@ if st.session_state.page == 'hero':
                 <h2 class="hero-subtitle">
                     Detect AI-generated images and videos
                 </h2>
-                <p style="font-size: 2.2rem; font-weight: 500; color: #475569 !important; max-width: 70rem; margin: 0 auto 5rem auto; line-height: 1.6;">
+                <p style="font-size: 20.2rem; font-weight: 500; color: #475569 !important; max-width: 70rem; margin: 0 auto 5rem auto; line-height: 1.6;">
                     Upload an image or video to check if it has been manipulated using deepfake techniques. 
                 </p>
             </div>
@@ -336,3 +336,4 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
+
