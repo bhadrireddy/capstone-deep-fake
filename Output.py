@@ -64,7 +64,7 @@ st.markdown("""
             color: white !important;
             padding: 3rem 2rem !important;
             border-radius: 2rem !important;
-            font-size: 3rem !important;
+            font-size: 8rem !important;
             font-weight: 900 !important;
             width: 100%;
         }
@@ -87,7 +87,7 @@ st.markdown("""
         }
 
         .streamlit-expanderHeader {
-            font-size: 3.5rem !important;
+            font-size: 8.5rem !important;
             font-weight: 800 !important;
             background-color: rgba(255,255,255,0.9) !important;
         }
@@ -183,7 +183,7 @@ st.markdown("""
             transform: translateY(-50%);
             pointer-events: none;
             color: #0f172a;
-            font-size: 1rem;
+            font-size: 4rem;
         }
 
         .stSlider > div > div {
@@ -347,3 +347,4 @@ elif st.session_state.page in ["main", "results"]:
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
+
