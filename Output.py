@@ -326,5 +326,13 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
             # Close White Card
             st.markdown('</div>', unsafe_allow_html=True)
 
+    # --- FOOTER SECTION ---
+    st.markdown("""
+    <div style="text-align: center; color: rgba(255,255,255,0.7); margin-top: 3rem; padding-bottom: 2rem;">
+        <p>Project by <a href="https://github.com/Sneh-T-Shah/" style="color: white; text-decoration: underline;">Sneh Shah</a> and 
+        <a href="https://github.com/pankil-soni/" style="color: white; text-decoration: underline;">Pankil Soni</a></p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem;">
+            <i class="fab fa-github"></i> <a href="https://github.com/Sneh-T-Shah/deepfake-detection" style="color: white;">View Source Code</a>
+        </p>
     </div>
     """, unsafe_allow_html=True)
