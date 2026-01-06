@@ -114,14 +114,14 @@ st.markdown("""
 
         /* "Drop your image here..." / "Drop your video here..." label */
         [data-testid="stFileUploader"] label {
-            font-size: 8rem !important;                  /* bigger label */
+            font-size: 4rem !important;                  /* bigger label */
             font-weight: 900 !important;
             color: #0f172a !important;                     /* dark text */
         }
 
-        /* Main drag-and-drop button area */
+        /* Main drag-and-drop button area (Drag and drop file here...) */
         [data-testid="stFileUploader"] div[role="button"] {
-            background-color: #ffffff !important;          /* white, not black */
+            background-color: #ffffff !important;          /* white background */
             color: #0f172a !important;
             font-size: 2.8rem !important;                  /* much bigger text */
             font-weight: 800 !important;
@@ -145,18 +145,18 @@ st.markdown("""
              font-weight: 600 !important;
         }
 
-        /* Radio Buttons (File Type) - huge */
+        /* Radio Buttons (File Type) - huge (Image / Video) */
         .stRadio > div {
             flex-direction: row;
             gap: 50px;
             justify-content: center;
         }
         .stRadio label {
-            font-size: 6.5rem !important; /* slightly bigger */
-            padding: 1.2rem 3.5rem !important;
+            font-size: 5rem !important; /* bigger radio text */
+            padding: 2rem 4rem !important;
             background-color: rgba(255,255,255,0.9);
             border: 3px solid #cbd5e1;
-            border-radius: 1.8rem;
+            border-radius: 2.2rem;
             cursor: pointer;
         }
 
@@ -191,17 +191,17 @@ st.markdown("""
         
         /* Expander (Advanced Settings) */
         .streamlit-expanderHeader {
-            font-size: 3rem !important;  /* tremendously bigger text */
+            font-size: 3.5rem !important;  /* INCREASED SIZE FOR ADVANCED SETTINGS LABEL */
             font-weight: 800 !important;
             background-color: rgba(255,255,255,0.9) !important; /* keep light, avoid black */
             border-radius: 1rem;
-            padding: 1.8rem !important;
+            padding: 2.2rem !important;
             color: #0f172a !important;
         }
         .streamlit-expanderContent {
             background-color: rgba(255,255,255,0.7) !important;
-            padding-top: 1.5rem !important;
-            padding-bottom: 1.5rem !important;
+            padding-top: 1.8rem !important;
+            padding-bottom: 1.8rem !important;
         }
         .streamlit-expanderContent > div {
             background-color: transparent !important; /* avoid inner white box */
@@ -297,6 +297,7 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
 
             # Advanced Settings - Huge
             with st.expander("Show Advanced Settings", expanded=False):
+                # NOTE: sizing of expander label itself is controlled in CSS above
                 st.markdown('<div style="padding: 2rem; background: rgba(255,255,255,0.0); border-radius: 1rem;">', unsafe_allow_html=True)
                 
                 # Using columns for better alignment of big inputs
@@ -388,4 +389,3 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
-
