@@ -70,108 +70,7 @@ st.markdown("""
             color: #334155 !important; /* Slate 700 */
             margin-bottom: 3rem;
         }
-
-        /* ---------- GLOBAL TYPOGRAPHY ---------- */
-.stApp {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-
-/* ---------- BUTTONS (Check for Deepfake) ---------- */
-.stButton button {
-    background: linear-gradient(135deg, #e05252 0%, #c53030 100%) !important;
-    color: white !important;
-    border: none;
-    padding: 1.1rem 1.5rem !important;
-    border-radius: 1rem !important;
-    font-weight: 600 !important;
-    font-size: 1.1rem !important;
-    width: 100%;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-    transition: all 0.25s ease;
-}
-
-.stButton button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.18);
-}
-
-/* ---------- FILE UPLOADER ---------- */
-[data-testid="stFileUploader"] {
-    padding: 2.5rem 1.5rem !important;
-    background-color: rgba(255,255,255,0.6);
-    border: 2px dashed #94a3b8;
-    border-radius: 1rem;
-}
-
-[data-testid="stFileUploader"] div div {
-    font-size: 1rem !important;
-    font-weight: 500;
-}
-
-[data-testid="stFileUploader"] small {
-    font-size: 0.85rem !important;
-    opacity: 0.8;
-}
-
-/* ---------- RADIO BUTTONS (Image / Video) ---------- */
-.stRadio > div {
-    flex-direction: row;
-    gap: 2rem;
-    justify-content: center;
-}
-
-.stRadio label {
-    font-size: 1rem !important;
-    padding: 1rem 2rem !important;
-    background-color: rgba(255,255,255,0.6);
-    border: 2px solid #cbd5e1;
-    border-radius: 1rem;
-    font-weight: 500;
-}
-
-/* ---------- SELECT BOXES ---------- */
-.stSelectbox label {
-    font-size: 0.95rem !important;
-    font-weight: 600;
-    margin-bottom: 0.4rem !important;
-}
-
-.stSelectbox div[data-baseweb="select"] > div {
-    font-size: 0.95rem !important;
-    min-height: 3rem !important;
-    padding: 0.4rem 0.8rem;
-}
-
-/* ---------- SLIDER ---------- */
-.stSlider label {
-    font-size: 0.95rem !important;
-    font-weight: 600;
-}
-
-.stSlider div[data-baseweb="slider"] {
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-}
-
-/* ---------- EXPANDER (Advanced Settings) ---------- */
-.streamlit-expanderHeader {
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    background-color: rgba(255,255,255,0.55);
-    border-radius: 0.75rem;
-    padding: 0.75rem 1rem !important;
-}
-
-/* ---------- REMOVE STREAMLIT CLUTTER ---------- */
-#MainMenu { visibility: hidden; }
-footer { visibility: hidden; }
-header { visibility: hidden; }
-
-button[title="View fullscreen"] {
-    display: none;
-}
-
-    </style>
+/* --- WIDGET SIZING (HUGE) --- */ /* Buttons (Start Detecting & Check) */ .stButton button { background: linear-gradient(135deg, #e05252 0%, #c53030 100%) !important; color: white !important; border: none; padding: 3rem 2rem !important; /* Huge padding */ border-radius: 2rem !important; font-weight: 900 !important; font-size: 3rem !important; /* Huge Font */ line-height: 1 !important; transition: all 0.3s ease; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); } .stButton button p { color: white !important; /* Force button text white */ font-size: 3rem !important; } .stButton button:hover { transform: scale(1.02); box-shadow: 0 15px 30px rgba(0,0,0,0.15); } /* File Uploader - Massive Area */ [data-testid="stFileUploader"] { padding: 4rem 2rem !important; background-color: rgba(255,255,255,0.6); border: 4px dashed #64748b; border-radius: 2rem; } [data-testid="stFileUploader"] div div { font-size: 1.8rem !important; /* Larger drag drop text */ } [data-testid="stFileUploader"] small { font-size: 1.2rem !important; display: block; margin-top: 1rem; } /* Radio Buttons (File Type) */ .stRadio > div { flex-direction: row; gap: 50px; justify-content: center; } .stRadio label { font-size: 10rem !important; /* Huge Radio Text */ padding: 3rem 5rem !important; background-color: rgba(255,255,255,0.5); border: 5px solid #cbd5e1; border-radius: 5.5rem; cursor: pointer; } /* Select Box (Dropdowns) */ .stSelectbox label { font-size: 10rem !important; margin-bottom: 5rem !important; } .stSelectbox div[data-baseweb="select"] > div { font-size: 9.8rem !important; min-height: 15rem !important; /* Taller dropdown */ padding-top: 5rem; } /* Sliders */ .stSlider label { font-size: 15rem !important; } .stSlider div[data-baseweb="slider"] { padding-top: 1.5rem; padding-bottom: 1.5rem; } /* Expander (Advanced Settings) */ .streamlit-expanderHeader { font-size: 25rem !important; font-weight: 700 !important; background-color: rgba(255,255,255,0.5); border-radius: 1rem; padding: 1.5rem !important; } /* Hide images in fullscreen */ button[title="View fullscreen"]{ display: none; } </style>
 """, unsafe_allow_html=True)
 
 # --- Helper Functions for Navigation ---
@@ -347,5 +246,6 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
+
 
 
