@@ -73,7 +73,7 @@ st.markdown(
             background: linear-gradient(135deg, #e05252 0%, #c53030 100%) !important;
             color: white !important;
             border: none;
-            padding: 3rem 2rem !important;
+            padding: 1rem 1.5rem !important;
             border-radius: 4rem !important;
             font-weight: 900 !important;
             font-size: 4rem !important;
@@ -125,7 +125,7 @@ st.markdown(
         
     
     .stRadio label {
-        font-size: 3.2rem !important;
+        font-size: 15rem !important;
         font-weight: 700;
     }
     
@@ -275,4 +275,5 @@ elif st.session_state.page in ['main', 'results']:
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
+
 
