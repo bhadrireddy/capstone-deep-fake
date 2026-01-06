@@ -100,6 +100,18 @@ st.markdown("""
             background-color: #ffffff !important;
         }
 
+        [data-testid="stExpander"] [data-testid="stVerticalBlock"] {
+            background-color: #ffffff !important;
+        }
+
+        [data-testid="stExpander"] [data-testid="stVerticalBlock"] > div {
+            background-color: #ffffff !important;
+        }
+
+        [data-testid="stExpander"] .element-container {
+            background-color: #ffffff !important;
+        }
+
         .stSelectbox > div > div {
             background-color: #ffffff !important;
         }
@@ -239,7 +251,27 @@ elif st.session_state.page in ["main", "results"]:
 
         else:
             data = st.session_state.result_data
-            st.write(data)
+            result_text = data["result"]
+            pred = float(data["pred"])
+            
+            # Format results properly
+            is_fake = result_text == 'fake'
+            confidence = pred * 100 if is_fake else (1 - pred) * 100
+            percentage = round(confidence)
+            
+            st.markdown(f"""
+                <div style="background-color: #ffffff; padding: 3rem; border-radius: 2rem; margin: 2rem 0;">
+                    <h2 style="font-size: 4rem; font-weight: 900; color: {'#dc2626' if is_fake else '#16a34a'}; text-align: center; margin-bottom: 2rem;">
+                        {'Deepfake Detected' if is_fake else 'Authentic Media'}
+                    </h2>
+                    <p style="font-size: 2.5rem; color: #0f172a; text-align: center; margin-bottom: 2rem;">
+                        {'This media appears to be manipulated' if is_fake else 'No manipulation detected'}
+                    </p>
+                    <p style="font-size: 3rem; font-weight: 700; color: #0f172a; text-align: center;">
+                        Confidence: {percentage}%
+                    </p>
+                </div>
+            """, unsafe_allow_html=True)
 
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
