@@ -188,14 +188,23 @@ st.markdown("""
 
         .stSlider > div > div {
             background-color: #e2e8f0 !important;
+            height: 8px !important;
+            border-radius: 4px !important;
         }
 
         .stSlider > div > div > div {
-            background-color: #0f172a !important;
+            background-color: #dc2626 !important;
+            height: 8px !important;
+            border-radius: 4px !important;
         }
 
         .stSlider [role="slider"] {
-            background-color: #0f172a !important;
+            background-color: #dc2626 !important;
+            width: 20px !important;
+            height: 20px !important;
+            border-radius: 50% !important;
+            border: 2px solid #ffffff !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
         }
 
         [data-testid="stFileUploader"] label {
