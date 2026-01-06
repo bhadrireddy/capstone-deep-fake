@@ -131,6 +131,35 @@ st.markdown("""
             background-color: #ffffff !important;
         }
 
+        /* Radio button styling to ensure clickability */
+        .stRadio > div {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 1rem !important;
+        }
+
+        .stRadio label {
+            display: flex !important;
+            align-items: center !important;
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            padding: 0.5rem !important;
+            background-color: #ffffff !important;
+        }
+
+        .stRadio input[type="radio"] {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            width: 20px !important;
+            height: 20px !important;
+            margin-right: 0.75rem !important;
+            accent-color: #dc2626 !important;
+        }
+
+        .stRadio input[type="radio"]:checked {
+            accent-color: #dc2626 !important;
+        }
+
         [data-testid="stExpander"] .stSlider {
             background-color: #ffffff !important;
         }
@@ -285,11 +314,16 @@ elif st.session_state.page in ["main", "results"]:
                     "Select Model",
                     ("EfficientNetB4", "EfficientNetB4ST", "EfficientNetAutoAttB4", "EfficientNetAutoAttB4ST")
                 )
+                # Initialize dataset_selection in session state if not exists
+                if "dataset_selection" not in st.session_state:
+                    st.session_state.dataset_selection = st.session_state.dataset
+                
                 dataset = st.radio(
                     "Select Dataset", 
                     ("DFDC", "FFPP"),
                     key="dataset_selection"
                 )
+                # Update session state dataset when selection changes
                 st.session_state.dataset = dataset
                 threshold = st.slider("Select Threshold", 0.0, 1.0, 0.5)
 
