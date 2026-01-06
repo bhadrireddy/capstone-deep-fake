@@ -106,28 +106,37 @@ st.markdown("""
             border: 3px dashed #64748b !important;
         }
 
-        /* Inner dark bar (dropzone wrapper) → white */
-        [data-testid="stFileUploader"] > div:first-child {
-            background-color: #ffffff !important;          /* kill dark background */
-            border-radius: 1.5rem !important;
-        }
+/* Label */
+[data-testid="stFileUploader"] label {
+    font-size: 4rem !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+}
 
-        /* "Drop your image here..." / "Drop your video here..." label */
-        [data-testid="stFileUploader"] label {
-            font-size: 4rem !important;                  /* bigger label */
-            font-weight: 900 !important;
-            color: #0f172a !important;                     /* dark text */
-        }
+/* Kill dark dropzone wrapper */
+[data-testid="stFileUploader"] section {
+    background-color: #ffffff !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border-radius: 1.5rem !important;
+}
 
-        /* Main drag-and-drop button area (Drag and drop file here...) */
-        [data-testid="stFileUploader"] div[role="button"] {
-            background-color: #ffffff !important;          /* white background */
-            color: #0f172a !important;
-            font-size: 2.8rem !important;                  /* much bigger text */
-            font-weight: 800 !important;
-            padding: 2.5rem 2rem !important;
-            border-radius: 1.5rem !important;
-        }
+/* Inner clickable area */
+[data-testid="stFileUploader"] div[role="button"] {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 2.8rem !important;
+    font-weight: 800 !important;
+    padding: 2.5rem 2rem !important;
+    border-radius: 1.5rem !important;
+}
+
+/* Helper text */
+[data-testid="stFileUploader"] small {
+    color: #475569 !important;
+    font-size: 1.8rem !important;
+}
+
 
         /* Text inside drag-and-drop button */
         [data-testid="stFileUploader"] div[role="button"] p {
@@ -152,7 +161,7 @@ st.markdown("""
             justify-content: center;
         }
         .stRadio label {
-            font-size: 5rem !important; /* bigger radio text */
+            font-size: 25rem !important; /* bigger radio text */
             padding: 2rem 4rem !important;
             background-color: rgba(255,255,255,0.9);
             border: 3px solid #cbd5e1;
@@ -162,11 +171,11 @@ st.markdown("""
 
         /* Select Box (Dropdowns) */
         .stSelectbox label {
-            font-size: 3rem !important;  /* tremendously bigger label */
+            font-size: 8rem !important;  /* tremendously bigger label */
             margin-bottom: 1rem !important;
         }
         .stSelectbox div[data-baseweb="select"] > div {
-            font-size: 2.2rem !important;     /* bigger value text */
+            font-size: 6.2rem !important;     /* bigger value text */
             min-height: 6rem !important;      /* taller dropdown */
             padding-top: 1.2rem;
             padding-bottom: 1.2rem;
@@ -186,12 +195,12 @@ st.markdown("""
             padding-bottom: 2rem;
         }
         .stSlider span {
-            font-size: 2.2rem !important; /* tick / value text larger */
+            font-size: 6.2rem !important; /* tick / value text larger */
         }
         
         /* Expander (Advanced Settings) */
         .streamlit-expanderHeader {
-            font-size: 3.5rem !important;  /* INCREASED SIZE FOR ADVANCED SETTINGS LABEL */
+            font-size: 10.5rem !important;  /* INCREASED SIZE FOR ADVANCED SETTINGS LABEL */
             font-weight: 800 !important;
             background-color: rgba(255,255,255,0.9) !important; /* keep light, avoid black */
             border-radius: 1rem;
@@ -389,3 +398,4 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
+
