@@ -1,557 +1,136 @@
-<!DOCTYPE html>
-<html lang="en" style="height: auto; min-height: 100%;">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deepfake Detector - AI-Powered Media Authentication</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .hero-title {
-            font-size: 4.5rem;
-            font-weight: 900;
-            line-height: 1.1;
-            letter-spacing: -0.02em;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-        }
-        
-        .card-shadow {
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-        }
-        
-        .btn-danger {
-            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4);
-        }
-        
-        .upload-zone {
-            border: 3px dashed #cbd5e1;
-            transition: all 0.3s ease;
-        }
-        
-        .upload-zone:hover {
-            border-color: #667eea;
-            background: #f8f9ff;
-        }
-        
-        .upload-zone.dragover {
-            border-color: #667eea;
-            background: #f0f4ff;
-        }
-        
-        .tooltip {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 280px;
-            background-color: #1e293b;
-            color: #fff;
-            text-align: left;
-            border-radius: 8px;
-            padding: 12px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%;
-            left: 50%;
-            margin-left: -140px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 14px;
-            line-height: 1.5;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-        
-        .tooltip .tooltiptext::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #1e293b transparent transparent transparent;
-        }
-        
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-        
-        .progress-ring {
-            transform: rotate(-90deg);
-        }
-        
-        .progress-ring-circle {
-            transition: stroke-dashoffset 0.5s ease;
-        }
-        
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .spinner {
-            border: 4px solid #f3f4f6;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .how-it-works-panel {
-            position: fixed;
-            top: 0;
-            right: -400px;
-            width: 400px;
-            height: 100vh;
-            background: white;
-            box-shadow: -4px 0 20px rgba(0,0,0,0.2);
-            transition: right 0.3s ease;
-            z-index: 1000;
-            overflow-y: auto;
-        }
-        
-        .how-it-works-panel.open {
-            right: 0;
-        }
-        
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-            display: none;
-        }
-        
-        .overlay.active {
-            display: block;
-        }
-        
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 3rem;
-            }
-            .how-it-works-panel {
-                width: 100%;
-                right: -100%;
-            }
-        }
-    </style>
-</head>
-<body style="height: auto; min-height: 100%;">
-    <!-- Overlay for side panel -->
-    <div class="overlay" id="overlay" onclick="closeHowItWorks()"></div>
-    
-    <!-- How It Works Side Panel -->
-    <div class="how-it-works-panel" id="howItWorksPanel">
-        <div class="p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">How It Works</h2>
-                <button onclick="closeHowItWorks()" class="text-gray-500 hover:text-gray-700">
-                    <i class="fas fa-times text-2xl"></i>
-                </button>
-            </div>
-            
-            <div class="space-y-6">
-                <div class="flex items-start space-x-4">
-                    <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">1</div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Upload Your Media</h3>
-                        <p class="text-gray-600">Select an image or video file from your device. We support JPG, PNG, and MP4 formats.</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-start space-x-4">
-                    <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">2</div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Analyze Frames & Features</h3>
-                        <p class="text-gray-600">Our AI model examines facial features, artifacts, and inconsistencies that indicate manipulation. For videos, we analyze multiple frames to ensure accuracy.</p>
-                    </div>
-                </div>
-                
-                <div class="flex items-start space-x-4">
-                    <div class="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">3</div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Get Instant Results</h3>
-                        <p class="text-gray-600">Receive a detailed analysis with confidence scores showing whether the media is authentic or has been manipulated using deepfake technology.</p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="mt-8 p-4 bg-blue-50 rounded-lg">
-                <h4 class="font-semibold text-gray-900 mb-2">Advanced Settings</h4>
-                <p class="text-sm text-gray-600">Fine-tune detection with custom models, datasets, and threshold values for specialized use cases.</p>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Hero Page -->
-    <div id="heroPage" class="gradient-bg min-h-screen flex items-center justify-center px-6">
-        <div class="text-center max-w-4xl mx-auto">
-            <h1 class="hero-title text-white mb-6">Deepfake Detector</h1>
-            <h2 class="text-4xl font-semibold text-white mb-8">Detect AI-generated images and videos</h2>
-            <p class="text-xl text-white/90 mb-12 max-w-2xl mx-auto leading-relaxed">Upload an image or video to check if it has been manipulated using deepfake techniques. Our advanced AI models analyze media files to detect artificial manipulation with high accuracy.</p>
-            <button onclick="showMainPage()" class="btn-danger text-white text-xl font-bold py-5 px-16 rounded-xl shadow-2xl">
-                Start Detection <i class="fas fa-arrow-right ml-2"></i>
-            </button>
-        </div>
-    </div>
-    
-    <!-- Main Upload Page -->
-    <div id="mainPage" class="hidden gradient-bg min-h-screen py-12 px-6">
-        <div class="max-w-5xl mx-auto">
-            <!-- Header with How It Works Button -->
-            <div class="flex justify-between items-center mb-8">
-                <h1 class="text-4xl font-bold text-white">Deepfake Detector</h1>
-                <button onclick="openHowItWorks()" class="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-semibold transition-all flex items-center space-x-2">
-                    <i class="fas fa-question-circle"></i>
-                    <span>How It Works</span>
-                </button>
-            </div>
-            
-            <div class="bg-white rounded-2xl card-shadow p-10">
-                <!-- File Type Selection -->
-                <div class="mb-8">
-                    <label class="block text-2xl font-bold text-gray-900 mb-4">Select File Type</label>
-                    <div class="flex space-x-4">
-                        <button onclick="selectFileType('image')" id="imageBtn" class="flex-1 py-4 px-6 rounded-xl border-3 border-purple-600 bg-purple-50 text-purple-700 font-semibold text-lg transition-all">
-                            <i class="fas fa-image text-2xl mb-2"></i>
-                            <div>Image</div>
-                        </button>
-                        <button onclick="selectFileType('video')" id="videoBtn" class="flex-1 py-4 px-6 rounded-xl border-3 border-gray-300 bg-white text-gray-700 font-semibold text-lg transition-all hover:border-purple-600 hover:bg-purple-50 hover:text-purple-700">
-                            <i class="fas fa-video text-2xl mb-2"></i>
-                            <div>Video</div>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- File Upload Zone -->
-                <div class="mb-8">
-                    <label class="block text-2xl font-bold text-gray-900 mb-4">Upload File</label>
-                    <div class="upload-zone rounded-xl p-12 text-center cursor-pointer" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-                        <i class="fas fa-cloud-upload-alt text-6xl text-gray-400 mb-4"></i>
-                        <p class="text-xl font-semibold text-gray-700 mb-2">Click to upload or drag and drop</p>
-                        <p class="text-gray-500">JPG, PNG or MP4 (Max 50MB)</p>
-                        <input type="file" id="fileInput" class="hidden" accept="image/jpeg,image/png,video/mp4" onchange="handleFileUpload(event)">
-                    </div>
-                    
-                    <!-- Success Message -->
-                    <div id="successMessage" class="hidden mt-4 p-4 bg-green-50 border-2 border-green-500 rounded-lg flex items-center space-x-3">
-                        <i class="fas fa-check-circle text-green-500 text-2xl"></i>
-                        <div>
-                            <p class="font-semibold text-green-800">File uploaded successfully!</p>
-                            <p class="text-green-700 text-sm" id="fileName"></p>
-                        </div>
-                    </div>
-                    
-                    <!-- Preview -->
-                    <div id="previewContainer" class="hidden mt-6">
-                        <img id="imagePreview" class="hidden max-w-md mx-auto rounded-lg shadow-lg">
-                        <video id="videoPreview" class="hidden max-w-md mx-auto rounded-lg shadow-lg" controls></video>
-                    </div>
-                </div>
-                
-                <!-- Advanced Settings (Expandable) -->
-                <div class="mb-8">
-                    <button onclick="toggleAdvancedSettings()" class="w-full flex justify-between items-center py-4 px-6 bg-gray-50 hover:bg-gray-100 rounded-lg transition-all">
-                        <span class="text-xl font-bold text-gray-900">Advanced Settings</span>
-                        <i class="fas fa-chevron-down text-gray-600 transition-transform" id="advancedIcon"></i>
-                    </button>
-                    
-                    <div id="advancedSettings" class="hidden mt-4 p-6 bg-gray-50 rounded-lg space-y-6">
-                        <!-- Model Selection -->
-                        <div>
-                            <div class="flex items-center space-x-2 mb-3">
-                                <label class="text-lg font-semibold text-gray-900">Detection Model</label>
-                                <div class="tooltip">
-                                    <i class="fas fa-info-circle text-purple-600 cursor-help"></i>
-                                    <span class="tooltiptext">Choose the AI model for detection. EfficientNet models are optimized for accuracy. "ST" variants use spatial-temporal analysis for better video detection. "AutoAtt" models use attention mechanisms for improved feature extraction.</span>
-                                </div>
-                            </div>
-                            <select id="modelSelect" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-lg focus:border-purple-600 focus:outline-none">
-                                <option>EfficientNetB4</option>
-                                <option>EfficientNetB4ST</option>
-                                <option>EfficientNetAutoAttB4</option>
-                                <option>EfficientNetAutoAttB4ST</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Dataset Selection -->
-                        <div>
-                            <div class="flex items-center space-x-2 mb-3">
-                                <label class="text-lg font-semibold text-gray-900">Training Dataset</label>
-                                <div class="tooltip">
-                                    <i class="fas fa-info-circle text-purple-600 cursor-help"></i>
-                                    <span class="tooltiptext">Select the dataset used to train the model. DFDC (Deepfake Detection Challenge) is optimized for general deepfake detection. FFPP (FaceForensics++) specializes in facial manipulation detection.</span>
-                                </div>
-                            </div>
-                            <div class="flex space-x-4">
-                                <button onclick="selectDataset('DFDC')" id="dfdcBtn" class="flex-1 py-3 px-6 rounded-lg border-2 border-purple-600 bg-purple-50 text-purple-700 font-semibold transition-all">DFDC</button>
-                                <button onclick="selectDataset('FFPP')" id="ffppBtn" class="flex-1 py-3 px-6 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-semibold transition-all hover:border-purple-600">FFPP</button>
-                            </div>
-                        </div>
-                        
-                        <!-- Threshold Slider -->
-                        <div>
-                            <div class="flex items-center space-x-2 mb-3">
-                                <label class="text-lg font-semibold text-gray-900">Detection Threshold: <span id="thresholdValue" class="text-purple-600">0.5</span></label>
-                                <div class="tooltip">
-                                    <i class="fas fa-info-circle text-purple-600 cursor-help"></i>
-                                    <span class="tooltiptext">Set the sensitivity threshold (0.0 to 1.0). Lower values increase sensitivity but may produce more false positives. Higher values require stronger evidence of manipulation. Default is 0.5 for balanced detection.</span>
-                                </div>
-                            </div>
-                            <input type="range" id="thresholdSlider" min="0" max="1" step="0.01" value="0.5" class="w-full h-3 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-600" oninput="updateThreshold(this.value)">
-                            <div class="flex justify-between text-sm text-gray-600 mt-1">
-                                <span>More Sensitive</span>
-                                <span>More Strict</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Video Frames (shown only for video) -->
-                        <div id="framesSection" class="hidden">
-                            <div class="flex items-center space-x-2 mb-3">
-                                <label class="text-lg font-semibold text-gray-900">Frames to Analyze: <span id="framesValue" class="text-purple-600">50</span></label>
-                                <div class="tooltip">
-                                    <i class="fas fa-info-circle text-purple-600 cursor-help"></i>
-                                    <span class="tooltiptext">Number of video frames to analyze (0-100). More frames provide better accuracy but take longer to process. Recommended: 50 frames for balanced speed and accuracy.</span>
-                                </div>
-                            </div>
-                            <input type="range" id="framesSlider" min="0" max="100" step="1" value="50" class="w-full h-3 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-600" oninput="updateFrames(this.value)">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Check Button -->
-                <button id="checkButton" onclick="checkForDeepfake()" disabled class="w-full btn-primary text-white text-xl font-bold py-5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i class="fas fa-search mr-2"></i> Check for Deepfake
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Loading Page -->
-    <div id="loadingPage" class="hidden gradient-bg min-h-screen flex items-center justify-center px-6">
-        <div class="text-center">
-            <div class="spinner mx-auto mb-6"></div>
-            <h2 class="text-3xl font-bold text-white mb-4">Analyzing Your Media...</h2>
-            <p class="text-xl text-white/90" id="loadingMessage">Extracting features and analyzing frames</p>
-        </div>
-    </div>
-    
-    <!-- Results Page -->
-    <div id="resultsPage" class="hidden gradient-bg min-h-screen py-12 px-6">
-        <div class="max-w-4xl mx-auto">
-            <div class="bg-white rounded-2xl card-shadow p-10 fade-in">
-                <h1 class="text-4xl font-bold text-gray-900 mb-8 text-center">Detection Results</h1>
-                
-                <!-- Result Card -->
-                <div id="resultCard" class="mb-8 p-8 rounded-xl border-4">
-                    <div class="flex items-center justify-between mb-6">
-                        <div class="flex items-center space-x-4">
-                            <i id="resultIcon" class="text-6xl"></i>
-                            <div>
-                                <h2 class="text-3xl font-bold" id="resultTitle"></h2>
-                                <p class="text-lg text-gray-600" id="resultSubtitle"></p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-5xl font-bold" id="confidencePercentage"></div>
-                            <div class="text-gray-600">Confidence</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Progress Gauge -->
-                    <div class="flex justify-center mb-6">
-                        <svg width="200" height="200" class="progress-ring">
-                            <circle cx="100" cy="100" r="90" stroke="#e5e7eb" stroke-width="12" fill="none"></circle>
-                            <circle id="progressCircle" cx="100" cy="100" r="90" stroke="#667eea" stroke-width="12" fill="none" stroke-dasharray="565.48" stroke-dashoffset="565.48" class="progress-ring-circle" stroke-linecap="round"></circle>
-                            <text x="100" y="100" text-anchor="middle" dy=".3em" class="text-4xl font-bold" id="gaugeText" fill="#1e293b">0%</text>
-                        </svg>
-                    </div>
-                    
-                    <div id="resultDescription" class="text-center text-gray-700 text-lg"></div>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="flex space-x-4">
-                    <button onclick="showMainPage()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-4 rounded-xl transition-all">
-                        <i class="fas fa-arrow-left mr-2"></i> Analyze Another File
-                    </button>
-                    <button onclick="downloadReport()" class="flex-1 btn-primary text-white font-semibold py-4 rounded-xl">
-                        <i class="fas fa-download mr-2"></i> Download Report
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <script>
-        let currentFileType = 'image';
-        let currentDataset = 'DFDC';
-        let uploadedFile = null;
-        
-        function showMainPage() {
-            document.getElementById('heroPage').classList.add('hidden');
-            document.getElementById('mainPage').classList.remove('hidden');
-            document.getElementById('resultsPage').classList.add('hidden');
-            document.getElementById('loadingPage').classList.add('hidden');
-        }
-        
-        function selectFileType(type) {
-            currentFileType = type;
-            const imageBtn = document.getElementById('imageBtn');
-            const videoBtn = document.getElementById('videoBtn');
-            const framesSection = document.getElementById('framesSection');
-            
-            if (type === 'image') {
-                imageBtn.className = 'flex-1 py-4 px-6 rounded-xl border-3 border-purple-600 bg-purple-50 text-purple-700 font-semibold text-lg transition-all';
-                videoBtn.className = 'flex-1 py-4 px-6 rounded-xl border-3 border-gray-300 bg-white text-gray-700 font-semibold text-lg transition-all hover:border-purple-600 hover:bg-purple-50 hover:text-purple-700';
-                framesSection.classList.add('hidden');
-                document.getElementById('fileInput').accept = 'image/jpeg,image/png';
-            } else {
-                videoBtn.className = 'flex-1 py-4 px-6 rounded-xl border-3 border-purple-600 bg-purple-50 text-purple-700 font-semibold text-lg transition-all';
-                imageBtn.className = 'flex-1 py-4 px-6 rounded-xl border-3 border-gray-300 bg-white text-gray-700 font-semibold text-lg transition-all hover:border-purple-600 hover:bg-purple-50 hover:text-purple-700';
-                framesSection.classList.remove('hidden');
-                document.getElementById('fileInput').accept = 'video/mp4';
-            }
-            
-            // Reset upload
-            uploadedFile = null;
-            document.getElementById('successMessage').classList.add('hidden');
-            document.getElementById('previewContainer').classList.add('hidden');
-            document.getElementById('checkButton').disabled = true;
-        }
-        
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                uploadedFile = file;
-                
-                // Show success message
-                document.getElementById('successMessage').classList.remove('hidden');
-                document.getElementById('fileName').textContent = file.name;
-                
-                // Show preview
-                const previewContainer = document.getElementById('previewContainer');
-                const imagePreview = document.getElementById('imagePreview');
-                const videoPreview = document.getElementById('videoPreview');
-                
-                previewContainer.classList.remove('hidden');
-                
-                if (currentFileType === 'image') {
-                    imagePreview.classList.remove('hidden');
-                    videoPreview.classList.add('hidden');
-                    imagePreview.src = URL.createObjectURL(file);
-                } else {
-                    videoPreview.classList.remove('hidden');
-                    imagePreview.classList.add('hidden');
-                    videoPreview.src = URL.createObjectURL(file);
-                }
-                
-                // Enable check button
-                document.getElementById('checkButton').disabled = false;
-            }
-        }
-        
-        // Drag and drop
-        const uploadZone = document.getElementById('uploadZone');
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.classList.add('dragover');
-        });
-        
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover');
-        });
-        
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadZone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) {
-                document.getElementById('fileInput').files = e.dataTransfer.files;
-                handleFileUpload({ target: { files: [file] } });
-            }
-        });
-        
-        function toggleAdvancedSettings() {
-            const settings = document.getElementById('advancedSettings');
-            const icon = document.getElementById('advancedIcon');
-            
-            if (settings.classList.contains('hidden')) {
-                settings.classList.remove('hidden');
-                icon.style.transform = 'rotate(180deg)';
-            } else {
-                settings.classList.add('hidden');
-                icon.style.transform = 'rotate(0deg)';
-            }
-        }
-        
-        function selectDataset(dataset) {
-            currentDataset = dataset;
-            const dfdcBtn = document.getElementById('dfdcBtn');
-            const ffppBtn = document.getElementById('ffppBtn');
-            
-            if (dataset === 'DFDC') {
-                dfdcBtn.className = 'flex-1 py-3 px-6 rounded-lg border-2 border-purple-600 bg-purple-50 text-purple-700 font-semibold transition-all';
-                ffppBtn.className = 'flex-1 py-3 px-6 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-semibold transition-all hover:border-purple-600';
-            } else {
-                ffppBtn.className = 'flex-1 py-3 px-6 rounded-lg border-2 border-purple-600 bg-purple-50 text-purple-700 font-semibold transition-all';
-                dfdcBtn.className = 'flex-1 py-3 px-6 rounded-lg border-2 border-gray-300 bg-white text-gray-700 font-semibold transition-all hover:border-purple-600';
-            }
-        }
-        
-        function updateThreshold(value) {
-            document.getElementById('thresholdValue').textContent = parseFloat(value).toFixed(2);
-        }
-        
-        function updateFrames(value) {
-            document.getElementById('framesValue').textContent = value;
-        }
-        
-        function checkForDeepfake() {
+import streamlit as st
+from PIL import Image
+from api import process_image, process_video
+import os
+import streamlit.components.v1 as components
+
+# Page configuration
+st.set_page_config(
+    page_title="Deepfake Detector",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# Hide Streamlit defaults
+st.markdown("""
+<style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .main .block-container {
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+    .stApp {
+        background: transparent !important;
+    }
+    iframe {
+        border: none !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Initialize session state
+if 'page' not in st.session_state:
+    st.session_state.page = 'hero'
+if 'file_type' not in st.session_state:
+    st.session_state.file_type = 'Image'
+if 'uploaded_file' not in st.session_state:
+    st.session_state.uploaded_file = None
+if 'model' not in st.session_state:
+    st.session_state.model = 'EfficientNetAutoAttB4'
+if 'dataset' not in st.session_state:
+    st.session_state.dataset = 'DFDC'
+if 'threshold' not in st.session_state:
+    st.session_state.threshold = 0.5
+if 'frames' not in st.session_state:
+    st.session_state.frames = 50
+if 'result' not in st.session_state:
+    st.session_state.result = None
+if 'pred' not in st.session_state:
+    st.session_state.pred = None
+
+# Read HTML file
+html_paths = [
+    os.path.join(os.path.dirname(__file__), 'frontend.html'),
+    'frontend.html',
+    'deepfake-detection-main/frontend.html'
+]
+
+html_content = None
+for path in html_paths:
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            html_content = f.read()
+            break
+    except:
+        continue
+
+if html_content is None:
+    st.error("Could not load frontend.html")
+    st.stop()
+
+# Modify JavaScript to work with Streamlit
+# Replace checkForDeepfake to trigger Streamlit processing
+modified_html = html_content.replace(
+    """function checkForDeepfake() {
+
             // Show loading page
+
+            document.getElementById('mainPage').classList.add('hidden');
+
+            document.getElementById('loadingPage').classList.remove('hidden');
+
+            
+
+            const messages = [
+
+                'Extracting features and analyzing frames...',
+
+                'Running AI detection models...',
+
+                'Analyzing facial patterns and artifacts...',
+
+                'Computing confidence scores...'
+
+            ];
+
+            
+
+            let messageIndex = 0;
+
+            const messageInterval = setInterval(() => {
+
+                messageIndex = (messageIndex + 1) % messages.length;
+
+                document.getElementById('loadingMessage').textContent = messages[messageIndex];
+
+            }, 2000);
+
+            
+
+            // Simulate API call (replace with actual API call)
+
+            setTimeout(() => {
+
+                clearInterval(messageInterval);
+
+                
+
+                // Simulate result (replace with actual API response)
+
+                const isDeepfake = Math.random() > 0.5;
+
+                const confidence = Math.random() * 0.3 + (isDeepfake ? 0.6 : 0.1);
+
+                
+
+                showResults(isDeepfake, confidence);
+
+            }, 5000);
+
+        }""",
+    """function checkForDeepfake() {
             document.getElementById('mainPage').classList.add('hidden');
             document.getElementById('loadingPage').classList.remove('hidden');
             
@@ -568,76 +147,206 @@
                 document.getElementById('loadingMessage').textContent = messages[messageIndex];
             }, 2000);
             
-            // Simulate API call (replace with actual API call)
-            setTimeout(() => {
-                clearInterval(messageInterval);
-                
-                // Simulate result (replace with actual API response)
-                const isDeepfake = Math.random() > 0.5;
-                const confidence = Math.random() * 0.3 + (isDeepfake ? 0.6 : 0.1);
-                
-                showResults(isDeepfake, confidence);
-            }, 5000);
-        }
-        
-        function showResults(isDeepfake, probability) {
-            document.getElementById('loadingPage').classList.add('hidden');
-            document.getElementById('resultsPage').classList.remove('hidden');
-            
-            const resultCard = document.getElementById('resultCard');
-            const resultIcon = document.getElementById('resultIcon');
-            const resultTitle = document.getElementById('resultTitle');
-            const resultSubtitle = document.getElementById('resultSubtitle');
-            const confidencePercentage = document.getElementById('confidencePercentage');
-            const resultDescription = document.getElementById('resultDescription');
-            const progressCircle = document.getElementById('progressCircle');
-            const gaugeText = document.getElementById('gaugeText');
-            
-            const percentage = Math.round(probability * 100);
-            
-            if (isDeepfake) {
-                resultCard.className = 'mb-8 p-8 rounded-xl border-4 border-red-500 bg-red-50';
-                resultIcon.className = 'fas fa-exclamation-triangle text-6xl text-red-500';
-                resultTitle.textContent = 'Deepfake Detected';
-                resultTitle.className = 'text-3xl font-bold text-red-700';
-                resultSubtitle.textContent = 'This media appears to be manipulated';
-                confidencePercentage.textContent = percentage + '%';
-                confidencePercentage.className = 'text-5xl font-bold text-red-600';
-                resultDescription.innerHTML = '<strong>Warning:</strong> Our AI model has detected signs of deepfake manipulation in this media. The content may have been artificially generated or altered using machine learning techniques.';
-                progressCircle.setAttribute('stroke', '#dc2626');
-            } else {
-                resultCard.className = 'mb-8 p-8 rounded-xl border-4 border-green-500 bg-green-50';
-                resultIcon.className = 'fas fa-check-circle text-6xl text-green-500';
-                resultTitle.textContent = 'Authentic Media';
-                resultTitle.className = 'text-3xl font-bold text-green-700';
-                resultSubtitle.textContent = 'No manipulation detected';
-                confidencePercentage.textContent = percentage + '%';
-                confidencePercentage.className = 'text-5xl font-bold text-green-600';
-                resultDescription.innerHTML = '<strong>Good news!</strong> Our analysis indicates this media is likely authentic. No significant signs of deepfake manipulation were detected.';
-                progressCircle.setAttribute('stroke', '#16a34a');
+            // Trigger Streamlit processing
+            if (window.parent && window.parent.postMessage) {
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: { action: 'process' }
+                }, '*');
             }
-            
-            // Animate progress gauge
-            const circumference = 2 * Math.PI * 90;
-            const offset = circumference - (probability * circumference);
-            progressCircle.style.strokeDashoffset = offset;
-            gaugeText.textContent = percentage + '%';
-            gaugeText.setAttribute('fill', isDeepfake ? '#dc2626' : '#16a34a');
-        }
+        }"""
+)
+
+# Replace showMainPage
+modified_html = modified_html.replace(
+    """function showMainPage() {
+
+            document.getElementById('heroPage').classList.add('hidden');
+
+            document.getElementById('mainPage').classList.remove('hidden');
+
+            document.getElementById('resultsPage').classList.add('hidden');
+
+            document.getElementById('loadingPage').classList.add('hidden');
+
+        }""",
+    """function showMainPage() {
+            if (window.parent && window.parent.postMessage) {
+                window.parent.postMessage({
+                    type: 'streamlit:setComponentValue',
+                    value: { action: 'showMain' }
+                }, '*');
+            }
+            document.getElementById('heroPage').classList.add('hidden');
+            document.getElementById('mainPage').classList.remove('hidden');
+            document.getElementById('resultsPage').classList.add('hidden');
+            document.getElementById('loadingPage').classList.add('hidden');
+        }"""
+)
+
+# Hero Page
+if st.session_state.page == 'hero':
+    # Show hero page only
+    hero_html = modified_html
+    hero_html = hero_html.replace('id="mainPage" class="hidden"', 'id="mainPage" class="hidden"')
+    hero_html = hero_html.replace('id="resultsPage" class="hidden"', 'id="resultsPage" class="hidden"')
+    hero_html = hero_html.replace('id="loadingPage" class="hidden"', 'id="loadingPage" class="hidden"')
+    
+    components.html(hero_html, height=800, scrolling=False)
+    
+    # Hidden button to trigger navigation
+    if st.button("", key="start_hidden"):
+        st.session_state.page = 'main'
+        st.rerun()
+
+# Main Page
+elif st.session_state.page == 'main':
+    # File upload (hidden, will sync with HTML)
+    file_types = ["jpg", "jpeg", "png"] if st.session_state.file_type == 'Image' else ["mp4"]
+    uploaded_file = st.file_uploader(
+        "Upload",
+        type=file_types,
+        key="file_uploader",
+        label_visibility="collapsed"
+    )
+    
+    if uploaded_file is not None:
+        st.session_state.uploaded_file = uploaded_file
+    
+    # Show main page
+    main_html = modified_html
+    main_html = main_html.replace('id="heroPage" class="gradient-bg min-h-screen', 'id="heroPage" class="hidden gradient-bg min-h-screen')
+    main_html = main_html.replace('id="mainPage" class="hidden gradient-bg', 'id="mainPage" class="gradient-bg')
+    
+    components.html(main_html, height=1200, scrolling=True)
+    
+    # Advanced Settings (sync with HTML)
+    with st.expander("⚙️ Advanced Settings", expanded=False):
+        model = st.selectbox(
+            "Model",
+            ("EfficientNetB4", "EfficientNetB4ST", "EfficientNetAutoAttB4", "EfficientNetAutoAttB4ST"),
+            index=2 if st.session_state.model == 'EfficientNetAutoAttB4' else 0,
+            key="model_select"
+        )
+        st.session_state.model = model
         
-        function downloadReport() {
-            alert('Report download functionality would be implemented here');
-        }
+        dataset = st.radio(
+            "Dataset",
+            ("DFDC", "FFPP"),
+            index=0 if st.session_state.dataset == 'DFDC' else 1,
+            key="dataset_radio",
+            horizontal=True
+        )
+        st.session_state.dataset = dataset
         
-        function openHowItWorks() {
-            document.getElementById('howItWorksPanel').classList.add('open');
-            document.getElementById('overlay').classList.add('active');
-        }
+        threshold = st.slider(
+            "Threshold",
+            0.0, 1.0, st.session_state.threshold,
+            key="threshold_slider",
+            step=0.01
+        )
+        st.session_state.threshold = threshold
         
-        function closeHowItWorks() {
-            document.getElementById('howItWorksPanel').classList.remove('open');
-            document.getElementById('overlay').classList.remove('active');
-        }
-    </script>
-</body>
-</html>
+        if st.session_state.file_type == "Video":
+            frames = st.slider(
+                "Frames",
+                0, 100, st.session_state.frames,
+                key="frames_slider"
+            )
+            st.session_state.frames = frames
+    
+    # Process button
+    if st.button("Check for Deepfake", key="check_btn", type="primary"):
+        if st.session_state.uploaded_file is not None:
+            st.session_state.page = 'loading'
+            st.rerun()
+
+# Loading Page
+elif st.session_state.page == 'loading':
+    loading_html = modified_html
+    loading_html = loading_html.replace('id="heroPage" class="gradient-bg min-h-screen', 'id="heroPage" class="hidden gradient-bg min-h-screen')
+    loading_html = loading_html.replace('id="mainPage" class="hidden gradient-bg', 'id="mainPage" class="hidden gradient-bg')
+    loading_html = loading_html.replace('id="loadingPage" class="hidden gradient-bg', 'id="loadingPage" class="gradient-bg')
+    loading_html = loading_html.replace('id="resultsPage" class="hidden gradient-bg', 'id="resultsPage" class="hidden gradient-bg')
+    
+    components.html(loading_html, height=800, scrolling=False)
+    
+    # Process file
+    if st.session_state.uploaded_file is not None:
+        with st.spinner("Processing..."):
+            try:
+                if st.session_state.file_type == "Image":
+                    result, pred = process_image(
+                        image=st.session_state.uploaded_file,
+                        model=st.session_state.model,
+                        dataset=st.session_state.dataset,
+                        threshold=st.session_state.threshold
+                    )
+                else:
+                    os.makedirs("uploads", exist_ok=True)
+                    with open(f"uploads/{st.session_state.uploaded_file.name}", "wb") as f:
+                        f.write(st.session_state.uploaded_file.read())
+                    
+                    video_path = f"uploads/{st.session_state.uploaded_file.name}"
+                    
+                    result, pred = process_video(
+                        video_path=video_path,
+                        model=st.session_state.model,
+                        dataset=st.session_state.dataset,
+                        threshold=st.session_state.threshold,
+                        frames=st.session_state.frames
+                    )
+                
+                st.session_state.result = result
+                st.session_state.pred = pred
+                st.session_state.page = 'result'
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+                st.session_state.page = 'main'
+                st.rerun()
+
+# Results Page
+elif st.session_state.page == 'result':
+    result_html = modified_html
+    result_html = result_html.replace('id="heroPage" class="gradient-bg min-h-screen', 'id="heroPage" class="hidden gradient-bg min-h-screen')
+    result_html = result_html.replace('id="mainPage" class="hidden gradient-bg', 'id="mainPage" class="hidden gradient-bg')
+    result_html = result_html.replace('id="loadingPage" class="hidden gradient-bg', 'id="loadingPage" class="hidden gradient-bg')
+    result_html = result_html.replace('id="resultsPage" class="hidden gradient-bg', 'id="resultsPage" class="gradient-bg')
+    
+    # Inject results
+    if st.session_state.result is not None and st.session_state.pred is not None:
+        is_real = st.session_state.result == 'real'
+        confidence = st.session_state.pred
+        
+        result_script = f"""
+        <script>
+        (function() {{
+            function injectResults() {{
+                if (typeof showResults === 'function') {{
+                    showResults({str(is_real).lower()}, {confidence});
+                }} else {{
+                    setTimeout(injectResults, 100);
+                }}
+            }}
+            window.addEventListener('load', injectResults);
+            injectResults();
+        }})();
+        </script>
+        """
+        result_html = result_html.replace('</body>', result_script + '</body>')
+    
+    components.html(result_html, height=1000, scrolling=True)
+    
+    # Action buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("← Analyze Another File", key="analyze_another"):
+            st.session_state.uploaded_file = None
+            st.session_state.result = None
+            st.session_state.pred = None
+            st.session_state.page = 'main'
+            st.rerun()
+    with col2:
+        if st.button("Download Report", key="download_report", type="primary"):
+            st.info("Report download functionality would be implemented here")
