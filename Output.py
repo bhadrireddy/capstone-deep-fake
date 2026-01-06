@@ -73,7 +73,7 @@ st.markdown("""
             padding: 5rem 3rem !important;
             background-color: #ffffff !important;
             border-radius: 2.5rem !important;
-            border: 3px dashed #64748b !important;
+            border: 3px dashed #000000 !important;
         }
 
         [data-testid="stFileUploader"] section {
@@ -106,6 +106,36 @@ st.markdown("""
 
         .stSelectbox > div > div > div {
             background-color: #ffffff !important;
+        }
+
+        .stSelectbox [role="listbox"] {
+            background-color: #ffffff !important;
+        }
+
+        .stSelectbox [role="option"] {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+
+        .stSelectbox [role="option"]:hover {
+            background-color: #f1f5f9 !important;
+        }
+
+        div[data-baseweb="select"] {
+            background-color: #ffffff !important;
+        }
+
+        div[data-baseweb="popover"] {
+            background-color: #ffffff !important;
+        }
+
+        ul[role="listbox"] {
+            background-color: #ffffff !important;
+        }
+
+        li[role="option"] {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
         }
     </style>
 """, unsafe_allow_html=True)
