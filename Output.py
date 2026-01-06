@@ -222,20 +222,50 @@ st.markdown("""
             z-index: 10 !important;
         }
 
+        /* Hide default Streamlit/baseweb radio button circles */
+        .stRadio [data-baseweb="radio"] > div > div {
+            display: none !important;
+        }
+
+        .stRadio [data-baseweb="radio"] > div::before {
+            display: none !important;
+        }
+
+        /* Style native radio input - single circle only */
         .stRadio input[type="radio"] {
             cursor: pointer !important;
             pointer-events: auto !important;
             width: 20px !important;
             height: 20px !important;
             margin-right: 0.75rem !important;
-            accent-color: #dc2626 !important;
             position: relative !important;
             z-index: 11 !important;
             opacity: 1 !important;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            border: 2px solid #000000 !important;
+            border-radius: 50% !important;
+            background-color: #ffffff !important;
+            outline: none !important;
         }
 
         .stRadio input[type="radio"]:checked {
-            accent-color: #dc2626 !important;
+            background-color: #dc2626 !important;
+            border-color: #dc2626 !important;
+            position: relative !important;
+        }
+
+        .stRadio input[type="radio"]:checked::after {
+            content: "" !important;
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 8px !important;
+            height: 8px !important;
+            border-radius: 50% !important;
+            background-color: #ffffff !important;
         }
 
         /* Ensure radio button container is clickable */
