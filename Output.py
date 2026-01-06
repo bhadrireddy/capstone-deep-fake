@@ -19,6 +19,8 @@ if 'result_data' not in st.session_state:
     st.session_state.result_data = None
 if 'file_type' not in st.session_state:
     st.session_state.file_type = "Image"
+if 'dataset' not in st.session_state:
+    st.session_state.dataset = "DFDC"
 
 # Ensure uploads directory exists
 if not os.path.exists("uploads"):
@@ -283,7 +285,12 @@ elif st.session_state.page in ["main", "results"]:
                     "Select Model",
                     ("EfficientNetB4", "EfficientNetB4ST", "EfficientNetAutoAttB4", "EfficientNetAutoAttB4ST")
                 )
-                dataset = st.radio("Select Dataset", ("DFDC", "FFPP"))
+                dataset = st.radio(
+                    "Select Dataset", 
+                    ("DFDC", "FFPP"),
+                    key="dataset_selection"
+                )
+                st.session_state.dataset = dataset
                 threshold = st.slider("Select Threshold", 0.0, 1.0, 0.5)
 
                 if file_type == "Video":
