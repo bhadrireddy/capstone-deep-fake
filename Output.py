@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Professional CSS - Clean, Modern Design
+# Professional CSS - Clean, Modern Design with MUCH LARGER TEXT AND BUTTONS
 st.markdown("""
 <style>
     /* Hide Streamlit default elements */
@@ -32,12 +32,12 @@ st.markdown("""
     /* Header Styles */
     .app-header {
         background: white;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 24px 40px;
+        border-bottom: 2px solid #e2e8f0;
+        padding: 32px 40px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         position: sticky;
         top: 0;
         z-index: 100;
@@ -46,74 +46,78 @@ st.markdown("""
     .header-left {
         display: flex;
         align-items: center;
-        gap: 16px;
+        gap: 20px;
     }
     
     .logo-icon {
-        width: 48px;
-        height: 48px;
+        width: 56px;
+        height: 56px;
         background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-        border-radius: 12px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
-        font-size: 24px;
+        font-size: 28px;
         font-weight: 700;
     }
     
     .header-title {
-        font-size: 28px;
+        font-size: 32px;
         font-weight: 700;
         color: #1e293b;
         margin: 0;
     }
     
+    /* Increased button font sizes and padding throughout */
     .header-link {
         color: #0891b2;
         text-decoration: none;
-        font-size: 16px;
-        font-weight: 500;
+        font-size: 18px;
+        font-weight: 600;
         cursor: pointer;
-        padding: 8px 16px;
-        border-radius: 8px;
-        transition: background 0.2s;
+        padding: 12px 24px;
+        border-radius: 10px;
+        transition: all 0.2s;
+        background: white;
+        border: 2px solid #0891b2;
     }
     
     .header-link:hover {
         background: #f0f9ff;
+        transform: translateY(-2px);
     }
     
     /* Hero Section with premium styling */
     .hero-container {
         text-align: center;
-        padding: 120px 40px 80px;
-        max-width: 900px;
+        padding: 140px 40px 100px;
+        max-width: 1000px;
         margin: 0 auto;
     }
     
     .hero-title {
-        font-size: 64px;
+        font-size: 72px;
         font-weight: 800;
         color: #0f172a;
-        margin-bottom: 24px;
+        margin-bottom: 28px;
         line-height: 1.2;
-        letter-spacing: -1px;
+        letter-spacing: -1.5px;
     }
     
     .hero-subtitle {
-        font-size: 28px;
+        font-size: 32px;
         font-weight: 600;
         color: #0891b2;
-        margin-bottom: 32px;
+        margin-bottom: 36px;
     }
     
     .hero-description {
-        font-size: 18px;
+        font-size: 20px;
         color: #475569;
         line-height: 1.8;
-        margin-bottom: 48px;
-        max-width: 600px;
+        margin-bottom: 56px;
+        max-width: 700px;
         margin-left: auto;
         margin-right: auto;
     }
@@ -121,105 +125,107 @@ st.markdown("""
     /* Main Container */
     .main-container {
         background: white;
-        border-radius: 20px;
-        padding: 48px;
+        border-radius: 24px;
+        padding: 60px;
         margin: 40px auto;
-        max-width: 900px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+        max-width: 1000px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.08);
         border: 1px solid #e2e8f0;
     }
     
     .page-title {
-        font-size: 36px;
+        font-size: 44px;
         font-weight: 700;
         color: #0f172a;
-        margin-bottom: 40px;
+        margin-bottom: 48px;
         text-align: center;
     }
     
-    /* Enhanced Upload Section with better styling */
+    /* Significantly improved upload section with larger spacing and icons */
     .upload-section {
-        border: 2px dashed #cbd5e1;
-        border-radius: 16px;
-        padding: 80px 40px;
+        border: 3px dashed #cbd5e1;
+        border-radius: 20px;
+        padding: 100px 50px;
         text-align: center;
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        margin-bottom: 32px;
+        margin-bottom: 40px;
         transition: all 0.3s ease;
     }
     
     .upload-section:hover {
         border-color: #0891b2;
         background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        box-shadow: 0 8px 20px rgba(8, 145, 178, 0.1);
+        box-shadow: 0 12px 30px rgba(8, 145, 178, 0.15);
     }
     
     .upload-icon-wrapper {
-        width: 90px;
-        height: 90px;
-        margin: 0 auto 24px;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 32px;
         background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 100%);
-        border-radius: 20px;
+        border-radius: 24px;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: 0 8px 16px rgba(8, 145, 178, 0.15);
+        box-shadow: 0 12px 28px rgba(8, 145, 178, 0.2);
     }
     
     .upload-icon {
-        width: 48px;
-        height: 48px;
+        width: 64px;
+        height: 64px;
         color: #0891b2;
     }
     
     .upload-title {
-        font-size: 28px;
+        font-size: 32px;
         font-weight: 700;
         color: #0f172a;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
     }
     
     .upload-subtitle {
-        font-size: 16px;
+        font-size: 18px;
         color: #64748b;
-        margin-bottom: 24px;
+        margin-bottom: 28px;
+        font-weight: 500;
     }
     
     .success-message {
         background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
         color: #065f46;
-        padding: 16px 24px;
-        border-radius: 10px;
-        margin-top: 24px;
+        padding: 20px 28px;
+        border-radius: 12px;
+        margin-top: 28px;
         font-weight: 600;
-        font-size: 16px;
+        font-size: 18px;
         display: inline-flex;
         align-items: center;
         gap: 12px;
-        border: 1px solid #6ee7b7;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+        border: 2px solid #6ee7b7;
+        box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2);
     }
     
-    /* Buttons */
+    /* Much larger buttons with better padding and sizing */
     .primary-button {
         background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
         color: white;
-        padding: 16px 48px;
-        font-size: 18px;
-        font-weight: 600;
+        padding: 20px 60px;
+        font-size: 20px;
+        font-weight: 700;
         border: none;
-        border-radius: 12px;
+        border-radius: 14px;
         cursor: pointer;
         transition: all 0.3s ease;
         width: 100%;
         font-family: 'Inter', sans-serif;
-        box-shadow: 0 4px 15px rgba(8, 145, 178, 0.2);
+        box-shadow: 0 6px 20px rgba(8, 145, 178, 0.25);
+        min-height: 70px;
     }
     
     .primary-button:hover:not(:disabled) {
         background: linear-gradient(135deg, #0e7490 0%, #164e63 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(8, 145, 178, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(8, 145, 178, 0.35);
     }
     
     .primary-button:disabled {
@@ -232,51 +238,54 @@ st.markdown("""
     .secondary-button {
         background: white;
         color: #0891b2;
-        padding: 16px 48px;
-        font-size: 18px;
-        font-weight: 600;
+        padding: 20px 60px;
+        font-size: 20px;
+        font-weight: 700;
         border: 2px solid #0891b2;
-        border-radius: 12px;
+        border-radius: 14px;
         cursor: pointer;
         transition: all 0.3s ease;
         width: 100%;
         font-family: 'Inter', sans-serif;
+        min-height: 70px;
     }
     
     .secondary-button:hover {
         background: #f0f9ff;
-        box-shadow: 0 4px 12px rgba(8, 145, 178, 0.2);
+        box-shadow: 0 6px 20px rgba(8, 145, 178, 0.25);
+        transform: translateY(-3px);
     }
     
-    /* Advanced Settings with improved styling */
+    /* Advanced Settings with larger fonts and better contrast */
     .advanced-settings-content {
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
         border-radius: 16px;
-        padding: 32px;
-        margin-top: 16px;
+        padding: 40px;
+        margin-top: 20px;
         border: 1px solid #e2e8f0;
     }
     
     .info-text {
         background: linear-gradient(135deg, #e0f2fe 0%, #cffafe 100%);
         color: #0c4a6e;
-        padding: 16px 20px;
-        border-radius: 10px;
-        margin-top: 12px;
-        font-size: 14px;
-        line-height: 1.6;
-        border-left: 4px solid #0891b2;
-        box-shadow: 0 2px 8px rgba(8, 145, 178, 0.08);
+        padding: 20px 24px;
+        border-radius: 12px;
+        margin-top: 16px;
+        font-size: 16px;
+        line-height: 1.7;
+        border-left: 5px solid #0891b2;
+        box-shadow: 0 3px 10px rgba(8, 145, 178, 0.1);
+        font-weight: 500;
     }
     
-    /* Enhanced Result Card with better color coding and icons */
+    /* Enhanced Result Card with larger text and better styling */
     .result-card {
         background: white;
-        border-radius: 20px;
-        padding: 60px;
-        margin: 32px 0;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-        border: 3px solid;
+        border-radius: 24px;
+        padding: 80px;
+        margin: 40px 0;
+        box-shadow: 0 24px 50px rgba(0,0,0,0.1);
+        border: 4px solid;
         text-align: center;
     }
     
@@ -291,62 +300,62 @@ st.markdown("""
     }
     
     .result-icon {
-        font-size: 80px;
-        margin-bottom: 24px;
+        font-size: 100px;
+        margin-bottom: 32px;
     }
     
     .result-status {
-        font-size: 48px;
+        font-size: 56px;
         font-weight: 800;
-        margin-bottom: 16px;
-        letter-spacing: -0.5px;
+        margin-bottom: 20px;
+        letter-spacing: -1px;
     }
     
     .result-label {
-        font-size: 32px;
+        font-size: 36px;
         font-weight: 700;
-        margin-bottom: 24px;
+        margin-bottom: 32px;
     }
     
     .result-percentage {
-        font-size: 48px;
+        font-size: 56px;
         font-weight: 800;
-        margin: 32px 0;
-        letter-spacing: -0.5px;
+        margin: 40px 0;
+        letter-spacing: -1px;
     }
     
-    /* Progress Bars */
+    /* Larger progress bars with better sizing */
     .progress-container {
-        margin: 40px 0;
-        padding: 40px;
+        margin: 48px 0;
+        padding: 48px;
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border-radius: 16px;
+        border-radius: 18px;
         border: 1px solid #e2e8f0;
     }
     
     .progress-title {
-        font-size: 22px;
+        font-size: 28px;
         font-weight: 700;
         color: #0f172a;
-        margin-bottom: 28px;
+        margin-bottom: 32px;
         text-align: center;
     }
     
     .progress-item {
-        margin-bottom: 28px;
+        margin-bottom: 36px;
     }
     
     .progress-label {
-        font-size: 16px;
+        font-size: 20px;
         font-weight: 700;
-        margin-bottom: 12px;
+        margin-bottom: 16px;
         color: #0f172a;
     }
     
     .progress-bar-wrapper {
         background: #e2e8f0;
-        border-radius: 10px;
-        height: 50px;
+        border-radius: 12px;
+        height: 64px;
         overflow: hidden;
         position: relative;
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
@@ -354,31 +363,31 @@ st.markdown("""
     
     .progress-bar-fill {
         height: 100%;
-        border-radius: 10px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         color: white;
         font-weight: 700;
-        font-size: 16px;
+        font-size: 18px;
         transition: width 0.5s ease;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
     
-    /* Enhanced Loading Spinner */
+    /* Larger loading spinner and text */
     .spinner-container {
         text-align: center;
-        padding: 100px 40px;
+        padding: 120px 40px;
     }
     
     .spinner {
-        border: 4px solid #e2e8f0;
-        border-top: 4px solid #0891b2;
+        border: 6px solid #e2e8f0;
+        border-top: 6px solid #0891b2;
         border-radius: 50%;
-        width: 80px;
-        height: 80px;
+        width: 100px;
+        height: 100px;
         animation: spin 1s linear infinite;
-        margin: 0 auto 32px;
+        margin: 0 auto 40px;
     }
     
     @keyframes spin {
@@ -387,22 +396,23 @@ st.markdown("""
     }
     
     .loading-text {
-        font-size: 24px;
+        font-size: 32px;
         font-weight: 700;
         color: #0f172a;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
     }
     
     .loading-subtext {
-        font-size: 16px;
+        font-size: 20px;
         color: #64748b;
+        font-weight: 500;
     }
     
     .loading-status {
-        font-size: 14px;
+        font-size: 16px;
         color: #0891b2;
         font-weight: 600;
-        margin-top: 16px;
+        margin-top: 20px;
     }
     
     /* Modal Styles */
@@ -422,13 +432,13 @@ st.markdown("""
     
     .modal-content {
         background: white;
-        border-radius: 20px;
-        padding: 40px;
-        max-width: 550px;
+        border-radius: 24px;
+        padding: 48px;
+        max-width: 600px;
         width: 90%;
         max-height: 80vh;
         overflow-y: auto;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.15);
         position: relative;
         animation: modalFadeIn 0.2s ease;
     }
@@ -448,11 +458,11 @@ st.markdown("""
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 32px;
+        margin-bottom: 36px;
     }
     
     .modal-title {
-        font-size: 32px;
+        font-size: 36px;
         font-weight: 700;
         color: #0f172a;
         margin: 0;
@@ -461,11 +471,11 @@ st.markdown("""
     .modal-close-btn {
         background: #f1f5f9;
         border: none;
-        font-size: 28px;
+        font-size: 32px;
         color: #64748b;
         cursor: pointer;
-        padding: 8px 12px;
-        border-radius: 8px;
+        padding: 10px 14px;
+        border-radius: 10px;
         transition: all 0.2s;
         font-weight: 600;
         line-height: 1;
@@ -476,86 +486,47 @@ st.markdown("""
         color: #0f172a;
     }
     
-    /* Enhanced Step Items with better styling */
+    /* Enhanced Step Items with larger, clearer styling */
     .step-item {
-        padding: 24px;
-        margin: 16px 0;
+        padding: 32px;
+        margin: 20px 0;
         background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        border-radius: 12px;
-        border-left: 5px solid #0891b2;
+        border-radius: 16px;
         border: 2px solid #cffafe;
+        box-shadow: 0 4px 12px rgba(8, 145, 178, 0.1);
     }
     
     .step-number {
-        font-size: 18px;
+        font-size: 20px;
         font-weight: 700;
         color: #0891b2;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
         display: flex;
         align-items: center;
-        gap: 8px;
-    }
-    
-    .step-number::before {
-        content: '';
-        display: inline-block;
-        width: 32px;
-        height: 32px;
-        background: #0891b2;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 16px;
+        gap: 12px;
     }
     
     .step-description {
-        font-size: 16px;
+        font-size: 18px;
         color: #0c4a6e;
-        line-height: 1.7;
+        line-height: 1.8;
         font-weight: 500;
     }
     
-    /* How It Works Info Box */
-    .how-it-works-box {
-        position: fixed;
-        top: 100px;
-        right: 40px;
-        width: 50px;
-        height: 50px;
-        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 28px;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(8, 145, 178, 0.3);
-        transition: all 0.3s ease;
-        z-index: 50;
-    }
-    
-    .how-it-works-box:hover {
-        transform: scale(1.1);
-        box-shadow: 0 8px 25px rgba(8, 145, 178, 0.4);
-    }
-    
-    /* Streamlit Component Overrides */
+    /* Streamlit Component Overrides with larger fonts */
     .stRadio > div {
         flex-direction: row;
-        gap: 16px;
+        gap: 20px;
     }
     
     .stRadio > div > label {
-        font-size: 18px;
-        padding: 12px 24px;
-        border-radius: 10px;
+        font-size: 20px;
+        padding: 14px 28px;
+        border-radius: 12px;
         border: 2px solid #e2e8f0;
         background: white;
         transition: all 0.2s;
+        font-weight: 600;
     }
     
     .stRadio > div > label:hover {
@@ -564,25 +535,29 @@ st.markdown("""
     }
     
     .stExpander {
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        margin: 24px 0;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        margin: 28px 0;
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     }
     
     .stExpander > summary {
-        font-size: 18px;
+        font-size: 22px;
         font-weight: 700;
         color: #0f172a;
-        padding: 16px 20px;
+        padding: 18px 24px;
     }
     
     .stSelectbox label,
     .stSlider label {
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 700;
         color: #0f172a;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
+    }
+    
+    .stFileUploader {
+        margin-top: 28px;
     }
 </style>
 
@@ -626,7 +601,7 @@ def render_header():
         """, unsafe_allow_html=True)
     with header_col2:
         st.markdown('<div style="text-align: right; padding-top: 12px;">', unsafe_allow_html=True)
-        if st.button("How It Works", key="how_it_works_btn", use_container_width=True):
+        if st.button("📖 How It Works", key="how_it_works_btn", use_container_width=True):
             st.session_state.show_modal = True
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
@@ -644,28 +619,28 @@ def render_modal():
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
             st.markdown("""
-            <div style="background: white; border-radius: 20px; padding: 40px; 
-                        box-shadow: 0 20px 40px rgba(0,0,0,0.25); 
+            <div style="background: white; border-radius: 24px; padding: 48px; 
+                        box-shadow: 0 25px 50px rgba(0,0,0,0.25); 
                         position: relative; z-index: 10000; margin-top: -200px;">
                 <h2 class="modal-title">How It Works</h2>
             </div>
             """, unsafe_allow_html=True)
             
             st.markdown("""
-            <div style="background: white; border-radius: 20px; padding: 0 40px 40px; 
-                        box-shadow: 0 20px 40px rgba(0,0,0,0.25); 
+            <div style="background: white; border-radius: 24px; padding: 0 48px 48px; 
+                        box-shadow: 0 25px 50px rgba(0,0,0,0.25); 
                         position: relative; z-index: 10000; margin-top: -16px;">
                 <div class="step-item">
-                    <div class="step-number">1. Upload</div>
+                    <div class="step-number">📤 Step 1: Upload</div>
                     <div class="step-description">Select an image or video file from your device to analyze for deepfake manipulation.</div>
                 </div>
                 <div class="step-item">
-                    <div class="step-number">2. Analyze</div>
+                    <div class="step-number">🔍 Step 2: Analyze</div>
                     <div class="step-description">Our AI system extracts frames and features from your media, examining patterns and anomalies that indicate manipulation.</div>
                 </div>
                 <div class="step-item">
-                    <div class="step-number">3. Predict</div>
-                    <div class="step-description">Advanced deep learning models analyze the extracted features to determine whether the content is authentic or has been manipulated using deepfake techniques.</div>
+                    <div class="step-number">✅ Step 3: Predict</div>
+                    <div class="step-description">Advanced deep learning models analyze the extracted features to determine whether the content is authentic or has been manipulated.</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -689,7 +664,7 @@ if st.session_state.page == 'hero':
     
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        if st.button("Start", key="start_button", use_container_width=True, type="primary"):
+        if st.button("🚀 Get Started", key="start_button", use_container_width=True, type="primary"):
             st.session_state.page = 'main'
             st.rerun()
 
@@ -702,6 +677,7 @@ elif st.session_state.page == 'main':
     
     st.markdown('<h1 class="page-title">Upload & Analyze</h1>', unsafe_allow_html=True)
     
+    # File Type Selection
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         file_type = st.radio(
@@ -717,6 +693,7 @@ elif st.session_state.page == 'main':
             st.session_state.file_uploaded = False
         st.session_state.file_type = file_type
     
+    # Upload Section
     st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     
     if file_type == "Image":
@@ -749,11 +726,10 @@ elif st.session_state.page == 'main':
         
         st.markdown("""
         <div class="success-message">
-            ✓ File uploaded successfully
+            ✅ File uploaded successfully
         </div>
         """, unsafe_allow_html=True)
         
-        # Display preview
         if file_type == "Image":
             try:
                 image = Image.open(uploaded_file)
@@ -768,6 +744,7 @@ elif st.session_state.page == 'main':
     
     st.markdown('</div>', unsafe_allow_html=True)
     
+    # Advanced Settings
     with st.expander("⚙️ Advanced Settings", expanded=False):
         st.markdown('<div class="advanced-settings-content">', unsafe_allow_html=True)
         
@@ -782,7 +759,7 @@ elif st.session_state.page == 'main':
         st.session_state.model = model
         st.markdown("""
         <div class="info-text">
-            <strong>ℹ️ Model Selection:</strong> Choose the AI model used for detection. EfficientNetAutoAttB4 is recommended for best accuracy across diverse deepfake types.
+            <strong>🤖 Model:</strong> Choose the AI model used for detection. EfficientNetAutoAttB4 is recommended for best accuracy.
         </div>
         """, unsafe_allow_html=True)
         
@@ -796,7 +773,7 @@ elif st.session_state.page == 'main':
         st.session_state.dataset = dataset
         st.markdown("""
         <div class="info-text">
-            <strong>ℹ️ Dataset:</strong> Select the training dataset. DFDC (Deepfake Detection Challenge) is recommended for general use and provides broad coverage of deepfake creation methods.
+            <strong>📊 Dataset:</strong> Select the training dataset. DFDC (Deepfake Detection Challenge) is recommended for general use.
         </div>
         """, unsafe_allow_html=True)
         
@@ -809,7 +786,7 @@ elif st.session_state.page == 'main':
         st.session_state.threshold = threshold
         st.markdown(f"""
         <div class="info-text">
-            <strong>ℹ️ Threshold:</strong> Set the sensitivity level (Current: {threshold:.2f}). Lower values = more sensitive to deepfakes, higher values = require stronger evidence.
+            <strong>📈 Threshold:</strong> Set the sensitivity level (Current: {threshold:.2f}). Lower values are more sensitive to deepfakes, higher values require stronger evidence.
         </div>
         """, unsafe_allow_html=True)
         
@@ -823,12 +800,14 @@ elif st.session_state.page == 'main':
         
         st.markdown('</div>', unsafe_allow_html=True)
     
+    # Analyze Button
+    st.markdown('<br>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         check_disabled = not st.session_state.file_uploaded
         
         if st.button(
-            "Check for Deepfake",
+            "🔬 Analyze Media",
             disabled=check_disabled,
             use_container_width=True,
             key="check_button",
@@ -839,7 +818,7 @@ elif st.session_state.page == 'main':
             st.rerun()
     
     if check_disabled:
-        st.info("👆 Upload a file above to analyze")
+        st.info("⬆️ Please upload a file to continue")
     
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -850,19 +829,16 @@ elif st.session_state.page == 'result':
     
     st.markdown('<div class="main-container">', unsafe_allow_html=True)
     
-    # Process the file if not already processed
     if st.session_state.uploaded_file is not None and st.session_state.result is None:
         loading_placeholder = st.empty()
         loading_placeholder.markdown("""
         <div class="spinner-container">
             <div class="spinner"></div>
-            <div class="loading-text">Analyzing Your File</div>
-            <div class="loading-subtext">Processing media with advanced AI detection</div>
-            <div class="loading-status">This may take a few moments. Please wait...</div>
+            <div class="loading-text">Analyzing your file</div>
+            <div class="loading-subtext">This may take a few moments. Please wait.</div>
         </div>
         """, unsafe_allow_html=True)
         
-        # Process the file
         try:
             if st.session_state.file_type == "Image":
                 result, pred = process_image(
@@ -891,28 +867,26 @@ elif st.session_state.page == 'result':
         except Exception as e:
             loading_placeholder.empty()
             st.error(f"Error processing file: {str(e)}")
-            if st.button("Go Back", key="error_back", type="secondary"):
+            if st.button("Go Back", key="error_back", type="secondary", use_container_width=True):
                 st.session_state.page = 'main'
                 st.session_state.result = None
                 st.session_state.pred = None
                 st.rerun()
             st.stop()
     
-    # Show results only if available
     if st.session_state.result is not None and st.session_state.pred is not None:
         is_real = st.session_state.result == 'real'
         result_class = 'real' if is_real else 'fake'
         result_color = '#10b981' if is_real else '#ef4444'
-        result_text = 'AUTHENTIC' if is_real else 'DEEPFAKE DETECTED'
-        result_icon = '✓' if is_real else '⚠'
+        result_text = '✅ AUTHENTIC' if is_real else '⚠️ DEEPFAKE DETECTED'
+        result_icon = '✅' if is_real else '🚨'
         
-        # Convert probability to percentage
         deepfake_percentage = st.session_state.pred * 100
         real_percentage = (1 - st.session_state.pred) * 100
         
         st.markdown(f"""
         <div class="result-card {result_class}">
-            <div class="result-icon" style="color: {result_color};">{result_icon}</div>
+            <div class="result-icon">{result_icon}</div>
             <div class="result-status" style="color: {result_color};">{result_text}</div>
             <div class="result-percentage" style="color: {result_color};">
                 {real_percentage:.1f}% Real / {deepfake_percentage:.1f}% Deepfake
@@ -928,7 +902,7 @@ elif st.session_state.page == 'result':
         with col1:
             st.markdown(f"""
             <div class="progress-item">
-                <div class="progress-label">Real Content</div>
+                <div class="progress-label">✅ Real Content</div>
                 <div class="progress-bar-wrapper">
                     <div class="progress-bar-fill" style="background: linear-gradient(90deg, #10b981 0%, #059669 100%); width: {real_percentage}%;">
                         {real_percentage:.1f}%
@@ -940,7 +914,7 @@ elif st.session_state.page == 'result':
         with col2:
             st.markdown(f"""
             <div class="progress-item">
-                <div class="progress-label">Deepfake Content</div>
+                <div class="progress-label">⚠️ Deepfake Content</div>
                 <div class="progress-bar-wrapper">
                     <div class="progress-bar-fill" style="background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); width: {deepfake_percentage}%;">
                         {deepfake_percentage:.1f}%
@@ -951,10 +925,11 @@ elif st.session_state.page == 'result':
         
         st.markdown('</div>', unsafe_allow_html=True)
         
-        # Action Buttons
+        st.markdown('<br><br>', unsafe_allow_html=True)
+        
         col1, col2, col3 = st.columns([1, 2, 1])
         with col2:
-            if st.button("Analyze Another File", use_container_width=True, key="analyze_another", type="primary"):
+            if st.button("🔄 Analyze Another File", use_container_width=True, key="analyze_another", type="primary"):
                 st.session_state.page = 'main'
                 st.session_state.file_uploaded = False
                 st.session_state.uploaded_file = None
@@ -963,7 +938,7 @@ elif st.session_state.page == 'result':
                 st.session_state.pred = None
                 st.rerun()
             
-            if st.button("Back to Home", use_container_width=True, key="back_home", type="secondary"):
+            if st.button("🏠 Back to Home", use_container_width=True, key="back_home", type="secondary"):
                 st.session_state.page = 'hero'
                 st.session_state.file_uploaded = False
                 st.session_state.uploaded_file = None
