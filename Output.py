@@ -76,7 +76,7 @@ st.markdown(
             padding: 3rem 2rem !important;
             border-radius: 4rem !important;
             font-weight: 900 !important;
-            font-size: 8rem !important;
+            font-size: 4rem !important;
             width: 100%;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
@@ -91,26 +91,72 @@ st.markdown(
             box-shadow:0 20px 35px rgba(255,255,255,0.15);
         }
 
+        
         [data-testid="stFileUploader"] {
-            padding: 4rem 2rem !important;
+            padding: 5rem 3rem !important;
             background-color: rgba(255,255,255,0.6);
-            border: 6.5px dashed #64748b;
+            border: 6px dashed #64748b;
             border-radius: 4rem;
         }
+        
+        [data-testid="stFileUploader"] label {
+            font-size: 3rem !important;
+            font-weight: 700;
+            color: #0f172a !important;
+        }
+        
+        [data-testid="stFileUploader"] div span {
+            font-size: 2.6rem !important;
+            font-weight: 600;
+            color: #ffffff !important;
+        }
+        
+        [data-testid="stFileUploader"] small {
+            font-size: 1.8rem !important;
+            color: rgba(255,255,255,0.7) !important;
+        }
+
 
         .stRadio > div {
             flex-direction: row;
-            gap: 50px;
+            gap: 60px;
             justify-content: center;
         }
+        
+    
+    .stRadio label {
+        font-size: 3.2rem !important;
+        font-weight: 700;
+    }
+    
+    .stRadio input[type="radio"] {
+        transform: scale(2.3);
+        margin-right: 1rem;
+    }
 
-        .streamlit-expanderHeader {
-            font-size: 25rem !important;
-            font-weight: 700 !important;
-            background-color: rgba(255,255,255,0.5);
-            border-radius: 2rem;
-            padding: 1.5rem !important;
+        .stSlider label {
+            font-size: 2.4rem !important;
+            font-weight: 700;
+            color: #0f172a !important;
         }
+        
+        .stSlider div[data-baseweb="slider"] > div {
+            height: 6px;
+            background-color: #e5e7eb;
+        }
+        
+        .stSlider div[role="slider"] {
+            background-color: #ef4444 !important;
+            width: 22px;
+            height: 22px;
+        }
+        
+        .stSlider span {
+            font-size: 1.8rem !important;
+            font-weight: 600;
+            color: #0f172a !important;
+        }
+
 
         button[title="View fullscreen"] {
             display: none;
@@ -229,3 +275,4 @@ elif st.session_state.page in ['main', 'results']:
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
+
