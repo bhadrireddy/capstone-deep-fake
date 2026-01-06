@@ -38,6 +38,18 @@ st.markdown("""
         font-family: 'Inter', sans-serif;
     }
     
+    /* Remove default Streamlit padding for hero page */
+    .main .block-container {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        max-width: 100% !important;
+    }
+    
+    /* Ensure full width for hero */
+    section[data-testid="stAppViewContainer"] {
+        padding: 0 !important;
+    }
+    
     /* Header Styles */
     .app-header {
         background: white;
@@ -58,42 +70,58 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
     }
     
-    /* Hero Section */
+    /* Hero Section - Full Viewport */
+    .hero-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        margin: 0;
+        width: 100%;
+    }
+    
     .hero-container {
         text-align: center;
-        padding: 120px 20px;
-        max-width: 1000px;
+        padding: 0 40px;
+        width: 100%;
+        max-width: 1200px;
         margin: 0 auto;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
     }
+    
     .hero-title {
-        font-size: 80px;
+        font-size: 96px;
         font-weight: 900;
-        color: #1e293b;
-        margin-bottom: 24px;
+        color: #0f172a;
+        margin-bottom: 32px;
         line-height: 1.1;
-        letter-spacing: -1px;
+        letter-spacing: -2px;
         text-align: center;
     }
+    
     .hero-subtitle {
-        font-size: 36px;
+        font-size: 42px;
         color: #1e293b;
         font-weight: 700;
-        margin-bottom: 32px;
+        margin-bottom: 40px;
         text-align: center;
         letter-spacing: -0.5px;
     }
+    
     .hero-desc {
-        font-size: 22px;
+        font-size: 24px;
         color: #475569;
-        margin-bottom: 50px;
-        line-height: 1.7;
+        margin-bottom: 60px;
+        line-height: 1.8;
         text-align: center;
         font-weight: 400;
-        max-width: 800px;
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
     }
     
     /* Upload Section */
@@ -165,25 +193,68 @@ st.markdown("""
         transition: all 0.2s;
     }
     
-    /* Get Started Button - Hero Page */
-    .hero-container .stButton > button {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-        color: white;
-        font-size: 20px;
-        font-weight: 700;
-        padding: 20px 60px;
-        height: auto;
-        min-height: 64px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
-        transition: all 0.3s ease;
-        letter-spacing: 0.5px;
+    /* Get Started Button - Hero Page - More Specific Selector */
+    div[data-testid="stButton"] > button[kind="primary"] {
+        background: #dc2626 !important;
+        background-image: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+        color: white !important;
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        padding: 24px 80px !important;
+        height: auto !important;
+        min-height: 72px !important;
+        border-radius: 12px !important;
+        box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35) !important;
+        transition: all 0.3s ease !important;
+        letter-spacing: 0.5px !important;
+        border: none !important;
     }
     
-    .hero-container .stButton > button:hover {
-        background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+    div[data-testid="stButton"] > button[kind="primary"]:hover {
+        background: #b91c1c !important;
+        background-image: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 24px rgba(220, 38, 38, 0.45) !important;
+    }
+    
+    /* Alternative selector for hero page button */
+    .hero-wrapper div[data-testid="stButton"] > button {
+        background: #dc2626 !important;
+        background-image: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+        color: white !important;
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        padding: 24px 80px !important;
+        height: auto !important;
+        min-height: 72px !important;
+        border-radius: 12px !important;
+        box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35) !important;
+        transition: all 0.3s ease !important;
+        letter-spacing: 0.5px !important;
+        border: none !important;
+    }
+    
+    .hero-wrapper div[data-testid="stButton"] > button:hover {
+        background: #b91c1c !important;
+        background-image: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 24px rgba(220, 38, 38, 0.45) !important;
+    }
+    
+    /* Force red button styling - catch all selectors */
+    button[kind="primary"][data-testid="baseButton-primary"] {
+        background: #dc2626 !important;
+        background-image: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    }
+    
+    /* Ensure hero section takes full viewport */
+    section[data-testid="stAppViewContainer"] > div:first-child {
+        padding: 0 !important;
+    }
+    
+    /* Remove default padding on hero page */
+    .hero-wrapper ~ * {
+        padding: 0 !important;
     }
     
     /* Info Box */
@@ -242,16 +313,21 @@ def close_modal():
 
 # --- 6. PAGE: HERO SECTION ---
 if st.session_state.page == 'hero':
+    st.markdown('<div class="hero-wrapper">', unsafe_allow_html=True)
     st.markdown('<div class="hero-container">', unsafe_allow_html=True)
+    
     st.markdown('<div class="hero-title">Deepfake Detector</div>', unsafe_allow_html=True)
     st.markdown('<div class="hero-subtitle">Detect AI-generated images and videos</div>', unsafe_allow_html=True)
     st.markdown('<p class="hero-desc">Upload an image or video to check if it has been manipulated using deepfake techniques. Our advanced AI models analyze your media with state-of-the-art precision.</p>', unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns([1, 1, 1])
+    # Button with wider column for better centering
+    col1, col2, col3 = st.columns([1, 1.5, 1])
     with col2:
-        if st.button("Get Started", use_container_width=True, type="primary"):
+        if st.button("Get Started", use_container_width=True, type="primary", key="hero_start_btn"):
             go_to_main()
             st.rerun()
+    
+    st.markdown('</div>', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # --- 7. MAIN & RESULT LOGIC ---
