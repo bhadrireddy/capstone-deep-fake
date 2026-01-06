@@ -31,6 +31,32 @@ st.markdown("""
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <script>
+        // Force radio buttons to be clickable
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const radioInputs = document.querySelectorAll('[data-testid="stExpander"] input[type="radio"]');
+                radioInputs.forEach(function(radio) {
+                    radio.style.pointerEvents = 'auto';
+                    radio.style.cursor = 'pointer';
+                    radio.style.zIndex = '9999';
+                    radio.style.position = 'relative';
+                    radio.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                    });
+                });
+                
+                const radioLabels = document.querySelectorAll('[data-testid="stExpander"] .stRadio label');
+                radioLabels.forEach(function(label) {
+                    label.style.pointerEvents = 'auto';
+                    label.style.cursor = 'pointer';
+                    label.style.zIndex = '9999';
+                    label.style.position = 'relative';
+                });
+            }, 100);
+        });
+    </script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         
@@ -114,8 +140,20 @@ st.markdown("""
             background-color: #ffffff !important;
         }
 
-        [data-testid="stExpander"] * {
+        /* Removed universal selector to prevent blocking radio button clicks */
+        [data-testid="stExpander"] > div,
+        [data-testid="stExpander"] [data-testid="stVerticalBlock"],
+        [data-testid="stExpander"] [data-testid="stVerticalBlock"] > div,
+        [data-testid="stExpander"] .element-container,
+        [data-testid="stExpander"] p,
+        [data-testid="stExpander"] span {
             background-color: #ffffff !important;
+        }
+
+        /* Ensure no element blocks radio button clicks */
+        [data-testid="stExpander"] .stRadio,
+        [data-testid="stExpander"] .stRadio * {
+            pointer-events: auto !important;
         }
 
         [data-testid="stExpander"] label {
@@ -129,13 +167,48 @@ st.markdown("""
 
         [data-testid="stExpander"] .stRadio {
             background-color: #ffffff !important;
+            pointer-events: auto !important;
+            position: relative !important;
+            z-index: 1000 !important;
         }
 
-        /* Radio button styling to ensure clickability */
+        /* Remove any overlays that might block clicks */
+        [data-testid="stExpander"]::before,
+        [data-testid="stExpander"]::after {
+            display: none !important;
+            pointer-events: none !important;
+        }
+
+        /* Ensure expander content doesn't block */
+        [data-testid="stExpander"] [data-testid="stExpanderContent"] {
+            pointer-events: auto !important;
+        }
+
+        [data-testid="stExpander"] [data-testid="stExpanderContent"] * {
+            pointer-events: auto !important;
+        }
+
+        /* Radio button styling to ensure clickability - override universal selector */
+        [data-testid="stExpander"] .stRadio,
+        [data-testid="stExpander"] .stRadio *,
+        [data-testid="stExpander"] .stRadio input,
+        [data-testid="stExpander"] .stRadio label,
+        [data-testid="stExpander"] .stRadio [data-baseweb="radio"],
+        [data-testid="stExpander"] .stRadio [role="radio"],
+        [data-testid="stExpander"] .stRadio [role="radiogroup"] {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            z-index: 999 !important;
+            position: relative !important;
+        }
+
         .stRadio > div {
             display: flex !important;
             flex-direction: column !important;
             gap: 1rem !important;
+            pointer-events: auto !important;
+            position: relative !important;
+            z-index: 10 !important;
         }
 
         .stRadio label {
@@ -145,6 +218,8 @@ st.markdown("""
             pointer-events: auto !important;
             padding: 0.5rem !important;
             background-color: #ffffff !important;
+            position: relative !important;
+            z-index: 10 !important;
         }
 
         .stRadio input[type="radio"] {
@@ -154,10 +229,42 @@ st.markdown("""
             height: 20px !important;
             margin-right: 0.75rem !important;
             accent-color: #dc2626 !important;
+            position: relative !important;
+            z-index: 11 !important;
+            opacity: 1 !important;
         }
 
         .stRadio input[type="radio"]:checked {
             accent-color: #dc2626 !important;
+        }
+
+        /* Ensure radio button container is clickable */
+        .stRadio [data-baseweb="radio"] {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        }
+
+        .stRadio [data-baseweb="radio"] > div {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        }
+
+        /* Force radio buttons to be interactive */
+        [data-testid="stExpander"] .stRadio [role="radiogroup"] {
+            pointer-events: auto !important;
+        }
+
+        [data-testid="stExpander"] .stRadio [role="radio"] {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            z-index: 100 !important;
+            position: relative !important;
+        }
+
+        [data-testid="stExpander"] .stRadio label[data-baseweb="radio"] {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            z-index: 100 !important;
         }
 
         [data-testid="stExpander"] .stSlider {
@@ -314,16 +421,12 @@ elif st.session_state.page in ["main", "results"]:
                     "Select Model",
                     ("EfficientNetB4", "EfficientNetB4ST", "EfficientNetAutoAttB4", "EfficientNetAutoAttB4ST")
                 )
-                # Initialize dataset_selection in session state if not exists
-                if "dataset_selection" not in st.session_state:
-                    st.session_state.dataset_selection = st.session_state.dataset
-                
                 dataset = st.radio(
                     "Select Dataset", 
                     ("DFDC", "FFPP"),
-                    key="dataset_selection"
+                    index=0 if st.session_state.dataset == "DFDC" else 1,
+                    key="dataset_radio_key"
                 )
-                # Update session state dataset when selection changes
                 st.session_state.dataset = dataset
                 threshold = st.slider("Select Threshold", 0.0, 1.0, 0.5)
 
