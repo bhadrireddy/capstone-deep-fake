@@ -61,28 +61,39 @@ st.markdown("""
     /* Hero Section */
     .hero-container {
         text-align: center;
-        padding: 100px 20px;
-        max-width: 900px;
+        padding: 120px 20px;
+        max-width: 1000px;
         margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
     }
     .hero-title {
-        font-size: 64px;
-        font-weight: 800;
+        font-size: 80px;
+        font-weight: 900;
         color: #1e293b;
-        margin-bottom: 20px;
+        margin-bottom: 24px;
         line-height: 1.1;
+        letter-spacing: -1px;
+        text-align: center;
     }
     .hero-subtitle {
-        font-size: 28px;
-        color: #3b82f6;
-        font-weight: 600;
-        margin-bottom: 20px;
+        font-size: 36px;
+        color: #1e293b;
+        font-weight: 700;
+        margin-bottom: 32px;
+        text-align: center;
+        letter-spacing: -0.5px;
     }
     .hero-desc {
-        font-size: 18px;
-        color: #64748b;
-        margin-bottom: 40px;
-        line-height: 1.6;
+        font-size: 22px;
+        color: #475569;
+        margin-bottom: 50px;
+        line-height: 1.7;
+        text-align: center;
+        font-weight: 400;
+        max-width: 800px;
     }
     
     /* Upload Section */
@@ -152,6 +163,27 @@ st.markdown("""
         font-weight: 600;
         border: none;
         transition: all 0.2s;
+    }
+    
+    /* Get Started Button - Hero Page */
+    .hero-container .stButton > button {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        color: white;
+        font-size: 20px;
+        font-weight: 700;
+        padding: 20px 60px;
+        height: auto;
+        min-height: 64px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+        transition: all 0.3s ease;
+        letter-spacing: 0.5px;
+    }
+    
+    .hero-container .stButton > button:hover {
+        background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
     }
     
     /* Info Box */
