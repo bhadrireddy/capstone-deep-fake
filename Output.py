@@ -32,17 +32,12 @@ st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         
-        /* Global Font & Text Visibility */
+        /* Global Font */
         html, body, [class*="css"] {
             font-family: 'Inter', sans-serif;
         }
         
-        /* Force Text Colors to Dark Blue/Black for Visibility */
-        h1, h2, h3, h4, h5, h6, span, div, label, p {
-            color: #0f172a !important; /* Dark Slate 900 */
-        }
-        
-        /* Background: Subtler Warm Light Color */
+        /* Background: Warm Light Color */
         .stApp {
             background: linear-gradient(180deg, #FFFBF0 0%, #FFF5E6 100%);
             background-attachment: fixed;
@@ -52,114 +47,143 @@ st.markdown("""
         header {visibility: hidden;}
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
-        
-        /* --- HERO PAGE STYLES --- */
+
+        /* --- HERO PAGE --- */
         .hero-title {
-            font-size: 8rem !important; /* Massive Title */
+            font-size: 8rem !important;
             font-weight: 900 !important;
             line-height: 1.1;
-            letter-spacing: -0.02em;
-            color: #1e3a8a !important; /* Strong Blue for Heading */
+            color: #1e3a8a !important; /* Strong Blue */
             text-shadow: 2px 2px 0px rgba(255,255,255,0.5);
             margin-bottom: 1rem;
         }
         
         .hero-subtitle {
-            font-size: 3.5rem !important; /* Massive Subtitle */
+            font-size: 3.5rem !important;
             font-weight: 700 !important;
-            color: #334155 !important; /* Slate 700 */
+            color: #334155 !important;
             margin-bottom: 3rem;
         }
 
-        /* --- WIDGET SIZING (HUGE) --- */
+        /* --- WIDGET SIZING & COLORS --- */
         
+        /* 1) HUGE Radio Buttons (Image/Video) */
+        .stRadio > div {
+            flex-direction: row;
+            gap: 60px;
+            justify-content: center;
+        }
+        .stRadio label {
+            font-size: 4rem !important; /* Huge text */
+            padding: 1.5rem 4rem !important; /* Huge clickable area */
+            background-color: white;
+            border: 4px solid #cbd5e1;
+            border-radius: 2rem;
+            cursor: pointer;
+            color: #1e293b !important;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 4) HUGE File Uploader Box */
+        [data-testid="stFileUploader"] {
+            padding: 6rem 2rem !important; /* Increased padding */
+            background-color: rgba(255,255,255,0.8);
+            border: 6px dashed #94a3b8;
+            border-radius: 3rem;
+            min-height: 400px; /* Force minimum height */
+            align-content: center;
+        }
+        
+        /* 2) Increase font of "Drop your image here" */
+        [data-testid="stFileUploader"] div div {
+            font-size: 3rem !important;
+            font-weight: 700 !important;
+            color: #334155 !important;
+        }
+        
+        /* 3) Change color of "Drag and drop files here" subtext */
+        [data-testid="stFileUploader"] small {
+             font-size: 2rem !important;
+             color: #ef4444 !important; /* Changed to Red for visibility */
+             font-weight: 600 !important;
+             display: block;
+             margin-top: 1.5rem;
+        }
+        
+        /* 5) Tremendous Font for Advanced Settings Header */
+        .streamlit-expanderHeader {
+            font-size: 3.5rem !important;
+            font-weight: 800 !important;
+            color: #1e3a8a !important;
+            background-color: transparent !important;
+            border: none !important;
+        }
+        .streamlit-expanderHeader p {
+             font-size: 3.5rem !important;
+             color: #1e3a8a !important;
+        }
+        
+        /* 6) Fix Advanced Settings Black Background */
+        /* We force the expander content to be transparent or light */
+        [data-testid="stExpanderDetails"] {
+            background-color: transparent !important;
+            border: none !important;
+            color: #0f172a !important;
+        }
+        
+        /* 8) Dropdown Text Color & 10) Size for Select Model */
+        .stSelectbox label {
+            font-size: 2.5rem !important;
+            color: #1e3a8a !important;
+            margin-bottom: 1rem !important;
+        }
+        .stSelectbox div[data-baseweb="select"] {
+            font-size: 2rem !important;
+            background-color: white !important;
+            color: #0f172a !important; /* Force dark text */
+            border-radius: 1rem;
+            border: 2px solid #cbd5e1;
+            min-height: 6rem !important; /* Taller box */
+        }
+        /* The text inside the selected option */
+        .stSelectbox div[data-baseweb="select"] div {
+            color: #0f172a !important; 
+            font-weight: 600;
+        }
+
+        /* 9) Increase Size for Select Threshold & Frames */
+        .stSlider label {
+            font-size: 2.5rem !important;
+            color: #1e3a8a !important;
+            padding-bottom: 1rem;
+        }
+        .stSlider div[data-baseweb="slider"] {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+
+        /* 10) Size for DFDC/FFPP Radio (Inside Expander) */
+        /* Since we targeted global radio above, we just need to ensure these fit. 
+           The global .stRadio style applies here too, making them huge automatically. */
+
         /* Buttons (Start Detecting & Check) */
         .stButton button {
             background: linear-gradient(135deg, #e05252 0%, #c53030 100%) !important;
             color: white !important;
             border: none;
-            padding: 3rem 2rem !important; /* Huge padding */
+            padding: 3rem 2rem !important;
             border-radius: 2rem !important;
             font-weight: 900 !important;
-            font-size: 3rem !important; /* Huge Font */
-            line-height: 1 !important;
-            transition: all 0.3s ease;
+            font-size: 3rem !important;
             width: 100%;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
         .stButton button p {
-            color: white !important; /* Force button text white */
             font-size: 3rem !important;
-        }
-        .stButton button:hover {
-            transform: scale(1.02);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-        }
-        
-        /* File Uploader - Massive Area */
-        [data-testid="stFileUploader"] {
-            padding: 4rem 2rem !important;
-            background-color: rgba(255,255,255,0.6);
-            border: 4px dashed #64748b;
-            border-radius: 2rem;
-        }
-        [data-testid="stFileUploader"] div div {
-            font-size: 1.8rem !important; /* Larger drag drop text */
-        }
-        [data-testid="stFileUploader"] small {
-             font-size: 1.2rem !important;
-             display: block;
-             margin-top: 1rem;
-        }
-
-        /* Radio Buttons (File Type) */
-        .stRadio > div {
-            flex-direction: row;
-            gap: 50px;
-            justify-content: center;
-        }
-        .stRadio label {
-            font-size: 3rem !important; /* Huge Radio Text */
-            padding: 1rem 3rem !important;
-            background-color: rgba(255,255,255,0.5);
-            border: 2px solid #cbd5e1;
-            border-radius: 1.5rem;
-            cursor: pointer;
-        }
-        
-        /* Select Box (Dropdowns) */
-        .stSelectbox label {
-            font-size: 2rem !important;
-            margin-bottom: 1rem !important;
-        }
-        .stSelectbox div[data-baseweb="select"] > div {
-            font-size: 1.8rem !important;
-            min-height: 5rem !important; /* Taller dropdown */
-            padding-top: 1rem;
-        }
-        
-        /* Sliders */
-        .stSlider label {
-            font-size: 2rem !important;
-        }
-        .stSlider div[data-baseweb="slider"] {
-            padding-top: 1.5rem;
-            padding-bottom: 1.5rem;
-        }
-        
-        /* Expander (Advanced Settings) */
-        .streamlit-expanderHeader {
-            font-size: 2rem !important;
-            font-weight: 700 !important;
-            background-color: rgba(255,255,255,0.5);
-            border-radius: 1rem;
-            padding: 1.5rem !important;
         }
         
         /* Hide images in fullscreen */
-        button[title="View fullscreen"]{
-            display: none;
-        }
+        button[title="View fullscreen"]{ display: none; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -173,7 +197,6 @@ def go_to_hero():
 
 # --- PAGE 1: HERO SECTION ---
 if st.session_state.page == 'hero':
-    # Using columns to center everything perfectly
     col1, col2, col3 = st.columns([1, 10, 1])
     
     with col2:
@@ -183,14 +206,13 @@ if st.session_state.page == 'hero':
                 <h2 class="hero-subtitle">
                     Detect AI-generated images and videos
                 </h2>
-                <p style="font-size: 2.2rem; font-weight: 500; color: #475569 !important; max-width: 70rem; margin: 0 auto 5rem auto; line-height: 1.6;">
+                <p style="font-size: 2.5rem; font-weight: 500; color: #475569 !important; max-width: 70rem; margin: 0 auto 5rem auto; line-height: 1.6;">
                     Upload an image or video to check if it has been manipulated using deepfake techniques. 
                 </p>
             </div>
         """, unsafe_allow_html=True)
         
-        # Center the start button
-        c1, c2, c3 = st.columns([1, 4, 1]) # Wider middle column for massive button
+        c1, c2, c3 = st.columns([1, 4, 1])
         with c2:
             st.button("START DETECTING ➜", on_click=go_to_main, use_container_width=True)
 
@@ -201,18 +223,18 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
     # Header
     st.markdown("""
         <div style="text-align: center; margin-bottom: 4rem; margin-top: 2rem;">
-            <h1 style="font-size: 5rem; font-weight: 900; color: #1e3a8a !important;">Deepfake Detector</h1>
+            <h1 style="font-size: 6rem; font-weight: 900; color: #1e3a8a !important;">Deepfake Detector</h1>
         </div>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 10, 1]) # Max width usage
+    col1, col2, col3 = st.columns([1, 10, 1])
     
     with col2:
         # --- INPUT SECTION ---
         if st.session_state.result_data is None:
             
-            # File Type Radio - Huge
-            st.markdown('<p style="font-size: 2.5rem; font-weight: 800; text-align: center; margin-bottom: 1.5rem;">Select File Type</p>', unsafe_allow_html=True)
+            # File Type Radio - HUGE
+            st.markdown('<p style="font-size: 3rem; font-weight: 800; text-align: center; margin-bottom: 2rem; color: #0f172a;">Select File Type</p>', unsafe_allow_html=True)
             file_type = st.radio(
                 "Select file type:", 
                 ("Image", "Video"), 
@@ -220,18 +242,16 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
                 label_visibility="collapsed"
             )
             
-            st.markdown('<br>', unsafe_allow_html=True)
+            st.markdown('<br><br>', unsafe_allow_html=True)
             
-            # File Uploader - Huge
-            st.markdown('<p style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem;">Upload File</p>', unsafe_allow_html=True)
+            # File Uploader - HUGE
             uploaded_file = st.file_uploader(
-                f"Drop your {file_type.lower()} here...", 
+                f"Drop your {file_type.lower()} here", 
                 type=["jpg", "jpeg", "png", "mp4"]
             )
             
             if uploaded_file is not None:
-                st.markdown(f'<div style="font-size: 1.5rem; color: green; font-weight: bold; margin-bottom: 1rem;">File uploaded: {uploaded_file.name}</div>', unsafe_allow_html=True)
-                # Preview Media
+                st.markdown(f'<div style="font-size: 2rem; color: green; font-weight: bold; margin-bottom: 1rem; text-align: center;">File uploaded: {uploaded_file.name}</div>', unsafe_allow_html=True)
                 if file_type == "Image":
                     try:
                         image = Image.open(uploaded_file)
@@ -243,11 +263,13 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
 
             st.markdown('<br>', unsafe_allow_html=True)
 
-            # Advanced Settings - Huge
+            # Advanced Settings
             with st.expander("Show Advanced Settings", expanded=False):
-                st.markdown('<div style="padding: 2rem; background: rgba(255,255,255,0.5); border-radius: 1rem;">', unsafe_allow_html=True)
+                # 7) Removed the markdown 'div' wrapper that was creating the empty white box.
+                # Now the controls sit directly on the expander background (transparent/page bg).
                 
-                # Using columns for better alignment of big inputs
+                st.markdown("<br>", unsafe_allow_html=True)
+                
                 adv_c1, adv_c2 = st.columns(2)
                 
                 with adv_c1:
@@ -256,7 +278,9 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
                         ("EfficientNetB4", "EfficientNetB4ST", "EfficientNetAutoAttB4", "EfficientNetAutoAttB4ST")
                     )
                     st.markdown("<br>", unsafe_allow_html=True)
-                    dataset = st.radio("Select Dataset", ("DFDC", "FFPP"))
+                    # This radio will inherit the HUGE style from above
+                    st.markdown('<p style="font-size: 2.5rem; font-weight: 700; color: #1e3a8a; margin-bottom: 1rem;">Select Dataset</p>', unsafe_allow_html=True)
+                    dataset = st.radio("Select Dataset", ("DFDC", "FFPP"), label_visibility="collapsed")
                 
                 with adv_c2:
                     threshold = st.slider("Select Threshold", 0.0, 1.0, 0.5)
@@ -266,12 +290,10 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
                     else:
                         frames = 0
                 
-                st.markdown('</div>', unsafe_allow_html=True)
 
             # Check Button
             if uploaded_file is not None:
                 st.markdown("<br><br>", unsafe_allow_html=True)
-                # Huge button due to CSS
                 if st.button("CHECK FOR DEEPFAKE", use_container_width=True):
                     with st.spinner("Analyzing media..."):
                         time.sleep(1) 
@@ -312,7 +334,6 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
                 desc = "No manipulation detected."
                 bar_color = "#38a169"
 
-            # Huge Result Display
             st.markdown(f"""
                 <div style="text-align: center; padding: 2rem;">
                     <i class="fas {icon} {color_class}" style="font-size: 10rem; margin-bottom: 2rem;"></i>
@@ -332,7 +353,6 @@ elif st.session_state.page == 'main' or st.session_state.page == 'results':
             
             st.markdown("<br><br>", unsafe_allow_html=True)
             
-            # Action Buttons
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
