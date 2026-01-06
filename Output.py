@@ -81,10 +81,31 @@ st.markdown("""
             box-shadow: none !important;
         }
 
+        [data-testid="stFileUploader"] button {
+            background-color: #ffffff !important;
+            color: #0f172a !important;
+        }
+
         .streamlit-expanderHeader {
             font-size: 3.5rem !important;
             font-weight: 800 !important;
             background-color: rgba(255,255,255,0.9) !important;
+        }
+
+        [data-testid="stExpander"] {
+            background-color: #ffffff !important;
+        }
+
+        [data-testid="stExpander"] > div {
+            background-color: #ffffff !important;
+        }
+
+        .stSelectbox > div > div {
+            background-color: #ffffff !important;
+        }
+
+        .stSelectbox > div > div > div {
+            background-color: #ffffff !important;
         }
     </style>
 """, unsafe_allow_html=True)
