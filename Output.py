@@ -48,7 +48,7 @@ st.markdown("""
         header, footer, #MainMenu { visibility: hidden; }
 
         .hero-title {
-            font-size: 8rem !important;
+            font-size: 6rem !important;
             font-weight: 900 !important;
             color: #1e3a8a !important;
         }
@@ -64,7 +64,7 @@ st.markdown("""
             color: white !important;
             padding: 3rem 2rem !important;
             border-radius: 2rem !important;
-            font-size: 8rem !important;
+            font-size: 15rem !important;
             font-weight: 900 !important;
             width: 100%;
         }
@@ -188,7 +188,7 @@ st.markdown("""
 
         .stSlider > div > div {
             background-color: #e2e8f0 !important;
-            height: 8px !important;
+            height: 1px !important;
             border-radius: 4px !important;
             border: none !important;
             box-shadow: none !important;
@@ -347,4 +347,5 @@ elif st.session_state.page in ["main", "results"]:
             if st.button("ANALYZE ANOTHER FILE"):
                 st.session_state.result_data = None
                 st.rerun()
+
 
