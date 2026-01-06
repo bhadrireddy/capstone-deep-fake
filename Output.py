@@ -222,40 +222,47 @@ st.markdown("""
             z-index: 10 !important;
         }
 
-        /* Hide default Streamlit/baseweb radio button circles */
-        .stRadio [data-baseweb="radio"] > div > div {
+        /* --- FIXED RADIO BUTTON CSS STARTS HERE --- */
+
+        /* 1. COMPLETELY HIDE the default Streamlit visual circles (the source of the double dot) */
+        .stRadio [data-baseweb="radio"] > div:first-child {
             display: none !important;
         }
-
-        .stRadio [data-baseweb="radio"] > div::before {
-            display: none !important;
-        }
-
-        /* Style native radio input - single circle only */
+        
+        /* 2. Style the NATIVE INPUT to replace the hidden default style */
         .stRadio input[type="radio"] {
-            cursor: pointer !important;
-            pointer-events: auto !important;
-            width: 20px !important;
-            height: 20px !important;
-            margin-right: 0.75rem !important;
-            position: relative !important;
-            z-index: 11 !important;
+            display: inline-block !important;
             opacity: 1 !important;
+            visibility: visible !important;
+            
+            /* Remove default browser styling (removes the black dot) */
             appearance: none !important;
             -webkit-appearance: none !important;
             -moz-appearance: none !important;
+            
+            /* Custom Circle Styling */
+            width: 20px !important;
+            height: 20px !important;
+            margin-right: 0.75rem !important;
+            
+            /* Force White Background for unselected state */
+            background-color: #ffffff !important;
             border: 2px solid #000000 !important;
             border-radius: 50% !important;
-            background-color: #ffffff !important;
+            
             outline: none !important;
-        }
-
-        .stRadio input[type="radio"]:checked {
-            background-color: #dc2626 !important;
-            border-color: #dc2626 !important;
             position: relative !important;
+            z-index: 11 !important;
+            cursor: pointer !important;
         }
 
+        /* 3. Styling for when the button is CHECKED */
+        .stRadio input[type="radio"]:checked {
+            background-color: #ffffff !important; /* Keep background white */
+            border-color: #dc2626 !important;     /* Turn border red */
+        }
+
+        /* 4. The inner red dot for the checked state */
         .stRadio input[type="radio"]:checked::after {
             content: "" !important;
             position: absolute !important;
@@ -265,8 +272,11 @@ st.markdown("""
             width: 8px !important;
             height: 8px !important;
             border-radius: 50% !important;
-            background-color: #ffffff !important;
+            background-color: #dc2626 !important;
+            display: block !important;
         }
+        
+        /* --- FIXED RADIO BUTTON CSS ENDS HERE --- */
 
         /* Ensure radio button container is clickable */
         .stRadio [data-baseweb="radio"] {
