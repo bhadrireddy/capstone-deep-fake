@@ -103,28 +103,27 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
                     )
                     # Use transformer prediction directly for no-face case
                     combined_pred = transformer_prob
-                    # Apply three-class logic
-                    fake_threshold = 0.65
+                    # Apply three-class logic with updated thresholds
+                    fake_threshold = 0.6
                     suspicious_lower = 0.35
                     if combined_pred > fake_threshold:
-                        return "Fake", combined_pred
+                        return "Deepfake", combined_pred
                     elif combined_pred >= suspicious_lower:
                         return "Suspicious", combined_pred
                     else:
-                        # Lower confidence for real when no faces detected
-                        return "Likely Real", combined_pred * 0.7
+                        return "Authentic", combined_pred
                 except Exception as e:
                     print(f"Transformer prediction failed for no-face case: {e}")
                     # Fall through to uncertain result
             # No faces and no transformer - return uncertain/suspicious
             return "Suspicious", 0.5  # Uncertain result for no-face case
         
-        # Process all detected faces, not just the first one
-        # This helps detect deepfakes better as we can check multiple faces
+        # Process detected faces - limit to top 1 face for speed optimization
+        # Process only the highest confidence face to reduce computation time
         all_faces = im_real_faces['faces']
         
-        # Limit to top 3 faces by confidence to avoid processing too many
-        num_faces_to_process = min(len(all_faces), 3)
+        # SPEED OPTIMIZATION: Process only top 1 face instead of 3
+        num_faces_to_process = min(len(all_faces), 1)
         faces_to_process = all_faces[:num_faces_to_process]
         
         faces_t = torch.stack([transf(image=im)['image'] for im in faces_to_process])
@@ -167,44 +166,30 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
         # Clamp combined_pred to [0, 1] to prevent > 100% confidence
         face_pred = max(0.0, min(1.0, float(combined_pred)))
         
-        # Enhance with Transformer RGB+FFT dual-branch analysis (full-image context)
-        # This is CRITICAL for catching AI edits that EfficientNet might miss
-        # ViT RGB analyzes spatial patterns, FFT analyzes frequency domain artifacts
-        # Transformer is the PRIMARY decision maker for full-image analysis
+        # Enhance with Swin Transformer RGB+FFT (full-image analysis)
+        # Swin Transformer is optimized for binary classification and true positives
+        # SPEED OPTIMIZATION: Use Swin as primary model, EfficientNet as secondary
         transformer_pred = None
         if TRANSFORMER_AVAILABLE:
             try:
-                # Get ViT RGB+FFT prediction (full-image, no face crops)
+                # Use Swin Transformer - faster and better for full-image analysis
                 transformer_label, transformer_prob = vit_fft_image_pred(
                     image_path=image_path, 
-                    threshold=threshold
+                    threshold=threshold,
+                    img_size=224  # Standard size for speed
                 )
                 transformer_pred = transformer_prob
             except Exception as e:
                 # If Transformer fails, continue with EfficientNet only
                 print(f"Transformer RGB+FFT enhancement failed (using EfficientNet only): {e}")
         
-        # AGGRESSIVE COMBINATION: If EITHER face model OR transformer is suspicious, increase fake probability
-        # This prevents averaging that would make AI images appear real
+        # OPTIMIZED COMBINATION: Use Swin Transformer as primary (weighted 70%)
+        # Binary classification optimized for true positives on real images
         if transformer_pred is not None:
-            # Both models available - use OR logic: if either is suspicious, boost fake probability
-            face_suspicious = face_pred > threshold
-            transformer_suspicious = transformer_pred > threshold
-            
-            if face_suspicious or transformer_suspicious:
-                # If EITHER model is suspicious, prioritize the higher prediction
-                # Use weighted max: take the higher prediction and boost it
-                max_pred = max(face_pred, transformer_pred)
-                # Boost by taking 60% of max and 40% of average (but only when suspicious)
-                if max_pred > 0.6:
-                    # Very suspicious - heavily weight the max
-                    combined_pred = 0.7 * max_pred + 0.2 * ((face_pred + transformer_pred) / 2) + 0.1 * min(face_pred, transformer_pred)
-                else:
-                    # Moderately suspicious - balanced boost
-                    combined_pred = 0.5 * max_pred + 0.3 * ((face_pred + transformer_pred) / 2) + 0.2 * min(face_pred, transformer_pred)
-            else:
-                # Both say real, but use transformer more (it's better at full-image analysis)
-                combined_pred = 0.4 * face_pred + 0.6 * transformer_pred
+            # Swin Transformer is primary decision maker (better for true positives)
+            # Use weighted combination: 70% Swin, 30% EfficientNet
+            # This prioritizes Swin's ability to correctly identify real images
+            combined_pred = 0.7 * transformer_pred + 0.3 * face_pred
         else:
             # Only face model available
             combined_pred = face_pred
@@ -212,34 +197,24 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
         # Clamp combined_pred to [0, 1]
         combined_pred = max(0.0, min(1.0, float(combined_pred)))
         
-        # THREE-CLASS OUTPUT: Fake, Suspicious, Likely Real
-        # Lower confidence for 'real' predictions when model is unsure
-        # Thresholds:
-        # - Fake: > 0.65 (high confidence fake)
-        # - Suspicious: 0.35 - 0.65 (uncertain, could be fake)
-        # - Likely Real: < 0.35 (but with lower confidence if close to suspicious threshold)
+        # THREE-CLASS OUTPUT: Deepfake, Authentic, Suspicious
+        # Updated thresholds per user requirements:
+        # - Fake: > 0.6
+        # - Suspicious: 0.35 - 0.6
+        # - Authentic: < 0.35
         
-        fake_threshold = 0.65
+        fake_threshold = 0.6
         suspicious_lower = 0.35
         
         if combined_pred > fake_threshold:
-            # FAKE - High confidence
-            return "Fake", combined_pred
+            # DEEPFAKE - > 0.6
+            return "Deepfake", combined_pred
         elif combined_pred >= suspicious_lower:
-            # SUSPICIOUS - Uncertain, could be fake or real
+            # SUSPICIOUS - 0.35 - 0.6
             return "Suspicious", combined_pred
         else:
-            # LIKELY REAL - But with lower confidence if close to suspicious threshold
-            # The closer to suspicious threshold, the lower the confidence for "real"
-            # This prevents confidently labeling AI images as real
-            if combined_pred > 0.25:
-                # Close to suspicious - very low confidence
-                confidence_penalty = (combined_pred - 0.25) / 0.1  # Penalty factor [0, 1]
-                adjusted_confidence = combined_pred * (1 - 0.5 * confidence_penalty)
-                return "Likely Real", max(0.05, adjusted_confidence)  # Min 5% confidence
-            else:
-                # Far from suspicious - moderate confidence, but still lower than fake
-                return "Likely Real", combined_pred * 0.8  # Scale down confidence for real
+            # AUTHENTIC - < 0.35
+            return "Authentic", combined_pred
             
     except Exception as e:
         print(f"Error processing image: {e}")
