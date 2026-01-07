@@ -14,7 +14,12 @@ from isplutils import utils
 
 # Optional import for transformer model (only if timm is available)
 try:
-    from transformer_model import vit_fft_video_frame_preds, _compute_fft_image
+    from transformer_model import (
+        swin_video_pred, 
+        _compute_fft_image, 
+        _compute_fft_video_clip,
+        _prepare_rgb_and_fft_tensors
+    )
     TRANSFORMER_MODEL_AVAILABLE = True
 except (ImportError, ModuleNotFoundError) as e:
     TRANSFORMER_MODEL_AVAILABLE = False
@@ -22,7 +27,7 @@ except (ImportError, ModuleNotFoundError) as e:
 
 def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames=100,video_path="notebook/samples/mqzvfufzoq.mp4"):
     
-    # New path: full-frame RGB + FFT ViT model (no face crops, no DFDC/FFPP assumptions)
+    # New path: Video Swin Transformer RGB+FFT model (no face crops, temporal video understanding)
     if model == 'ViT_RGB_FFT':
         if not TRANSFORMER_MODEL_AVAILABLE:
             raise ImportError(
@@ -30,61 +35,62 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
                 "Please install it with: pip install timm"
             )
         """
-        For the transformer-based RGB+FFT model, we:
-          - read multiple frames from the video using VideoReader,
-          - build RGB and FFT tensors for each frame,
-          - run the ViT model on all frames,
-          - aggregate sigmoid probabilities over frames,
-          - return the video-level probability of being AI-generated.
+        For the Video Swin Transformer RGB+FFT model:
+          - Read video frames as temporal clips (not individual frames)
+          - Build RGB and FFT video clip tensors
+          - Process entire video clips with temporal understanding
+          - Return video-level prediction (NOT frame-wise aggregation)
         """
         device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
         videoreader = VideoReader(verbose=False)
-        result = videoreader.read_frames(video_path, num_frames=frames)
+        
+        # Read frames as a temporal clip (recommended: 16-32 frames for good temporal context)
+        clip_length = min(frames, 32)  # Limit to reasonable clip length for video transformer
+        result = videoreader.read_frames(video_path, num_frames=clip_length)
 
         if result is None:
             return 'real', 0.5
 
-        frames_np, idxs = result  # (N, H, W, 3), [N]
+        frames_np, idxs = result  # (T, H, W, 3), [T]
         if len(frames_np) == 0:
             return 'real', 0.5
 
-        # Prepare RGB and FFT tensors for all frames
-        rgb_list = []
-        fft_list = []
+        T = len(frames_np)
+        
+        # Prepare RGB and FFT video clip tensors
+        rgb_clip_list = []
+        fft_clip_list = []
+        
         for frame in frames_np:
-            # frame: (H, W, 3), uint8 BGR converted to RGB in VideoReader
+            # frame: (H, W, 3), uint8 RGB from VideoReader
             pil_img = Image.fromarray(frame)
 
-            # Reuse the same FFT computation as for images
-            fft_np = _compute_fft_image(pil_img, size=(224, 224))  # (H, W)
-            fft_np = fft_np.astype('float32')
-
-            # RGB preprocessing
+            # RGB preprocessing: resize and normalize
             pil_rgb = pil_img.convert("RGB").resize((224, 224), Image.BILINEAR)
             rgb_np = np.array(pil_rgb).astype('float32') / 255.0
-            rgb_np = rgb_np.transpose(2, 0, 1)  # HWC → CHW
+            rgb_np = rgb_np.transpose(2, 0, 1)  # HWC → CHW: (3, H, W)
+            rgb_clip_list.append(rgb_np)
 
-            rgb_list.append(rgb_np)
-            fft_list.append(fft_np)
+            # FFT preprocessing
+            fft_np = _compute_fft_image(pil_img, size=(224, 224))  # (H, W)
+            fft_clip_list.append(fft_np)
 
-        rgb_arr = np.stack(rgb_list, axis=0)  # (N, 3, H, W)
-        fft_arr = np.stack(fft_list, axis=0)  # (N, H, W)
-        fft_arr = fft_arr[:, None, :, :]      # (N, 1, H, W)
+        # Stack to form video clips: (T, 3, H, W) and (T, H, W)
+        rgb_clip_arr = np.stack(rgb_clip_list, axis=0)  # (T, 3, 224, 224)
+        fft_clip_arr = np.stack(fft_clip_list, axis=0).astype('float32')  # (T, 224, 224)
+        fft_clip_arr = fft_clip_arr[:, None, :, :]  # (T, 1, 224, 224)
 
-        frames_rgb = torch.from_numpy(rgb_arr)
-        frames_fft = torch.from_numpy(fft_arr)
+        # Convert to tensors
+        rgb_clip_tensor = torch.from_numpy(rgb_clip_arr).float()  # (T, 3, H, W)
+        fft_clip_tensor = torch.from_numpy(fft_clip_arr).float()  # (T, 1, H, W)
 
-        probs_fake = vit_fft_video_frame_preds(frames_rgb, frames_fft, device=device)  # (N,)
+        # Process entire video clip with Video Swin Transformer (temporal understanding)
+        # This returns a SINGLE video-level probability (NOT frame-wise)
+        prob_fake = swin_video_pred(rgb_clip_tensor, fft_clip_tensor, device=device)
 
-        # Aggregate over frames without hardcoding threshold; just compute a robust statistic.
-        mean_pred = float(probs_fake.mean())
-        max_pred = float(probs_fake.max())
-        perc75 = float(np.percentile(probs_fake.numpy(), 75))
-
-        combined_pred = 0.4 * max_pred + 0.3 * perc75 + 0.3 * mean_pred
-
-        label = 'fake' if combined_pred >= threshold else 'real'
-        return label, combined_pred
+        # Single video-level prediction - no frame aggregation needed
+        label = 'fake' if prob_fake >= threshold else 'real'
+        return label, prob_fake
 
     """
     Existing path: CNN-based EfficientNet/Xception models trained on DFDC/FFPP using face crops.
