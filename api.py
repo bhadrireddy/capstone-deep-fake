@@ -32,7 +32,7 @@ def process_image(image, model, dataset, threshold):
     except Exception as e:
         st.error(f"Error processing image: {str(e)}")
         traceback.print_exc()
-        return f"Error: {str(e)}", 0.5
+        return "Suspicious", 0.5  # Return uncertain result on error
 
     finally:
         try:
@@ -56,7 +56,7 @@ def process_video(video_path, model, dataset, threshold, frames):
     except Exception as e:
         st.error(f"Error processing video: {str(e)}")
         traceback.print_exc()
-        return f"Error: {str(e)}", 0.5
+        return "Suspicious", 0.5  # Return uncertain result on error
 
     finally:
         try:
