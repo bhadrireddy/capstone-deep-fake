@@ -11,6 +11,7 @@ from blazeface import FaceExtractor, BlazeFace , VideoReader
 # from blazeface import FaceExtractor, BlazeFace, VideoReader
 from architectures import fornet,weights
 from isplutils import utils
+from functools import lru_cache
 
 # Optional import for physiological detector
 try:
@@ -31,9 +32,24 @@ try:
 except (ImportError, ModuleNotFoundError) as e:
     PHYSIOLOGICAL_MODEL_AVAILABLE = False
 
-def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames=100,video_path="notebook/samples/mqzvfufzoq.mp4"):
-    
+@lru_cache(maxsize=None)
+def _load_video_model(net_model: str, train_db: str, device_str: str):
+    """
+    Cache model and transformer to avoid re-loading weights on every video.
+    """
+    device = torch.device(device_str)
+    face_policy = 'scale'
+    face_size = 224
 
+    model_url = weights.weight_url['{:s}_{:s}'.format(net_model,train_db)]
+    net = getattr(fornet,net_model)().eval().to(device)
+    net.load_state_dict(load_url(model_url,map_location=device,check_hash=True))
+
+    transf = utils.get_transformer(face_policy, face_size, net.get_normalizer(), train=False)
+    return net, transf, device
+
+
+def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames=100,video_path="notebook/samples/mqzvfufzoq.mp4"):
     """
     Existing path: CNN-based EfficientNet/Xception models trained on DFDC/FFPP using face crops.
     """
@@ -46,18 +62,9 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
     """
     train_db = dataset
 
-    # setting the parameters
-    device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-    face_policy = 'scale'
-    face_size = 224
     frames_per_video = frames
-
-    # loading the weights
-    model_url = weights.weight_url['{:s}_{:s}'.format(net_model,train_db)]
-    net = getattr(fornet,net_model)().eval().to(device)
-    net.load_state_dict(load_url(model_url,map_location=device,check_hash=True))
-
-    transf = utils.get_transformer(face_policy, face_size, net.get_normalizer(), train=False)
+    device_str = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    net, transf, device = _load_video_model(net_model, train_db, device_str)
 
     facedet = BlazeFace().to(device)
     facedet.load_weights("blazeface/blazeface.pth")
