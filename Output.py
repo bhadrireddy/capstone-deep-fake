@@ -538,50 +538,47 @@ elif st.session_state.page in ["main", "results"]:
             # Clamp prediction to [0, 1] range to prevent > 100% confidence
             pred = max(0.0, min(1.0, pred))
             
-            # Format results properly - Three-class system: Fake, Suspicious, Likely Real
+            # Format results properly - Three-class system: Deepfake, Authentic, Suspicious
             result_lower = result_text.lower()
-            is_fake = result_lower == 'fake'
+            is_deepfake = result_lower == 'deepfake' or result_lower == 'fake'
             is_suspicious = result_lower == 'suspicious'
-            is_likely_real = result_lower == 'likely real'
+            is_authentic = result_lower == 'authentic' or result_lower == 'likely real' or result_lower == 'real'
             
-            # Calculate confidence percentage based on prediction value
-            # For Fake: high confidence (70-100%)
-            # For Suspicious: moderate confidence (50-70%)
-            # For Likely Real: lower confidence (30-60%) to reflect uncertainty
-            if is_fake:
-                # Fake: map pred [0.65, 1.0] to confidence [70%, 100%]
-                if pred >= 0.65:
-                    distance = (pred - 0.65) / (1.0 - 0.65)
+            # Calculate confidence percentage based on prediction value and thresholds
+            # Thresholds: < 0.35 = Authentic, 0.35-0.6 = Suspicious, > 0.6 = Deepfake
+            if is_deepfake:
+                # Deepfake: pred > 0.6, map to confidence [70%, 100%]
+                if pred > 0.6:
+                    distance = (pred - 0.6) / (1.0 - 0.6)
                     confidence = 70 + (distance * 30)  # 70% to 100%
                 else:
-                    confidence = 65
+                    confidence = 70
                 color = '#dc2626'  # Red
                 title = 'Deepfake Detected'
                 message = 'This media appears to be manipulated or AI-generated'
             elif is_suspicious:
-                # Suspicious: map pred [0.35, 0.65] to confidence [50%, 70%]
-                if pred >= 0.35 and pred <= 0.65:
-                    distance = (pred - 0.35) / (0.65 - 0.35)
+                # Suspicious: pred 0.35-0.6, map to confidence [50%, 70%]
+                if pred >= 0.35 and pred <= 0.6:
+                    distance = (pred - 0.35) / (0.6 - 0.35)
                     confidence = 50 + (distance * 20)  # 50% to 70%
                 else:
                     confidence = 60
                 color = '#f59e0b'  # Amber/Orange
-                title = 'Suspicious Content'
+                title = 'Suspicious'
                 message = 'Uncertain result - this media may be manipulated. Please verify with additional analysis.'
-            else:  # Likely Real
-                # Likely Real: map pred [0.0, 0.35] to confidence [30%, 60%]
-                # Lower confidence for real to prevent false negatives
-                if pred <= 0.35:
+            else:  # Authentic
+                # Authentic: pred < 0.35, map to confidence [40%, 70%]
+                if pred < 0.35:
                     if pred > 0:
                         distance = (0.35 - pred) / 0.35
-                        confidence = 30 + (distance * 30)  # 30% to 60%
+                        confidence = 40 + (distance * 30)  # 40% to 70%
                     else:
-                        confidence = 30
+                        confidence = 40
                 else:
-                    confidence = 35
+                    confidence = 50
                 color = '#16a34a'  # Green
-                title = 'Likely Authentic'
-                message = 'No significant manipulation detected, but confidence is moderate'
+                title = 'Authentic'
+                message = 'No significant manipulation detected'
             
             # Ensure confidence is between 0-100%
             confidence = max(0.0, min(100.0, confidence))
