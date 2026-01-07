@@ -9,11 +9,23 @@ sys.path.append('..')
 from blazeface import FaceExtractor, BlazeFace
 from architectures import fornet,weights
 from isplutils import utils
-from transformer_model import vit_fft_image_pred
+
+# Optional import for transformer model (only if timm is available)
+try:
+    from transformer_model import vit_fft_image_pred
+    TRANSFORMER_MODEL_AVAILABLE = True
+except (ImportError, ModuleNotFoundError) as e:
+    TRANSFORMER_MODEL_AVAILABLE = False
+    # Silently fail - old models will still work
 
 def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_path="notebook/samples/lynaeydofd_fr0.jpg"):
     # New path: full-frame RGB + FFT ViT model (no face crops, no DFDC/FFPP assumptions)
     if model == 'ViT_RGB_FFT':
+        if not TRANSFORMER_MODEL_AVAILABLE:
+            raise ImportError(
+                "ViT_RGB_FFT model requires 'timm' package. "
+                "Please install it with: pip install timm"
+            )
         # Use the provided threshold only to derive the label; vit_fft_image_pred
         # always returns the raw sigmoid probability as second output.
         return vit_fft_image_pred(image_path=image_path, threshold=threshold)
