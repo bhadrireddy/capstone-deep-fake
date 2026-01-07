@@ -2,6 +2,7 @@ import torch
 from torch.utils.model_zoo import load_url
 from scipy.special import expit
 import numpy as np
+from PIL import Image
 
 import sys
 sys.path.append('..')
@@ -10,12 +11,24 @@ from blazeface import FaceExtractor, BlazeFace , VideoReader
 # from blazeface import FaceExtractor, BlazeFace, VideoReader
 from architectures import fornet,weights
 from isplutils import utils
-from transformer_model import vit_fft_video_frame_preds, _compute_fft_image
+
+# Optional import for transformer model (only if timm is available)
+try:
+    from transformer_model import vit_fft_video_frame_preds, _compute_fft_image
+    TRANSFORMER_MODEL_AVAILABLE = True
+except (ImportError, ModuleNotFoundError) as e:
+    TRANSFORMER_MODEL_AVAILABLE = False
+    # Silently fail - old models will still work
 
 def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames=100,video_path="notebook/samples/mqzvfufzoq.mp4"):
     
     # New path: full-frame RGB + FFT ViT model (no face crops, no DFDC/FFPP assumptions)
     if model == 'ViT_RGB_FFT':
+        if not TRANSFORMER_MODEL_AVAILABLE:
+            raise ImportError(
+                "ViT_RGB_FFT model requires 'timm' package. "
+                "Please install it with: pip install timm"
+            )
         """
         For the transformer-based RGB+FFT model, we:
           - read multiple frames from the video using VideoReader,
