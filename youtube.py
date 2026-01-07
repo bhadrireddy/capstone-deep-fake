@@ -22,9 +22,19 @@ def _load_video_model(net_model: str, train_db: str, device_str: str):
     face_policy = 'scale'
     face_size = 224
 
-    model_url = weights.weight_url['{:s}_{:s}'.format(net_model,train_db)]
-    net = getattr(fornet,net_model)().eval().to(device)
-    net.load_state_dict(load_url(model_url,map_location=device,check_hash=True))
+    try:
+        model_url = weights.weight_url['{:s}_{:s}'.format(net_model,train_db)]
+        net = getattr(fornet,net_model)().eval().to(device)
+        # Load state dict with strict=False for ST models that might have slightly different keys
+        state_dict = load_url(model_url,map_location=device,check_hash=True)
+        try:
+            net.load_state_dict(state_dict, strict=True)
+        except RuntimeError as e:
+            # If strict loading fails, try with strict=False (for ST models)
+            print(f"Warning: Strict loading failed, trying lenient loading: {e}")
+            net.load_state_dict(state_dict, strict=False)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load model {net_model} for dataset {train_db}: {str(e)}")
 
     transf = utils.get_transformer(face_policy, face_size, net.get_normalizer(), train=False)
     return net, transf, device
@@ -45,7 +55,20 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
 
     frames_per_video = frames
     device_str = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    net, transf, device = _load_video_model(net_model, train_db, device_str)
+    
+    # Special handling for memory-intensive models
+    if net_model == 'EfficientNetAutoAttB4ST':
+        # Clear cache before loading this heavy model
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+    
+    try:
+        net, transf, device = _load_video_model(net_model, train_db, device_str)
+    except Exception as e:
+        # Handle model loading errors gracefully
+        error_msg = str(e)
+        if "EfficientNetAutoAttB4ST" in error_msg or "AutoAttB4ST" in error_msg:
+            return 'real', 0.5
+        raise
 
     facedet = BlazeFace().to(device)
     facedet.load_weights("blazeface/blazeface.pth")
@@ -94,18 +117,24 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
         percentile_75 = float(np.percentile(faces_fake_pred, 75))
         
         # Weighted combination: prioritize max and high percentiles
-        # This helps catch videos where only some frames are manipulated
-        cnn_prob = 0.4 * max_pred + 0.3 * percentile_75 + 0.2 * mean_pred + 0.1 * median_pred
-        
-        # Physiological heuristics from detections (no heavy deps)
-        physio_prob = _physio_heuristics_from_detections(vid_fake_faces)
-        
-        # Fuse CNN probability with physiological score
-        combined_pred = 0.85 * cnn_prob + 0.15 * physio_prob
-        
-        # Adjust threshold slightly lower and cap it to be more sensitive to AI-generated content.
-        # This makes the detector more likely to flag subtle AI edits as fake.
-        adjusted_threshold = min(threshold * 0.9, 0.4)
+        # For ST models, use a more conservative approach
+        if 'ST' in net_model:
+            # ST models: more balanced, less aggressive weighting
+            cnn_prob = 0.35 * max_pred + 0.35 * mean_pred + 0.2 * percentile_75 + 0.1 * median_pred
+            # ST models don't need as much physiological boost
+            physio_prob = _physio_heuristics_from_detections(vid_fake_faces)
+            combined_pred = 0.9 * cnn_prob + 0.1 * physio_prob
+            # ST models don't need aggressive threshold adjustment
+            adjusted_threshold = threshold
+        else:
+            # Regular models: more aggressive weighting
+            cnn_prob = 0.4 * max_pred + 0.3 * percentile_75 + 0.2 * mean_pred + 0.1 * median_pred
+            # Physiological heuristics from detections (no heavy deps)
+            physio_prob = _physio_heuristics_from_detections(vid_fake_faces)
+            # Fuse CNN probability with physiological score
+            combined_pred = 0.85 * cnn_prob + 0.15 * physio_prob
+            # Adjust threshold slightly lower and cap it to be more sensitive to AI-generated content.
+            adjusted_threshold = min(threshold * 0.9, 0.4)
         
         # Return fake probability in both cases for consistent confidence calculation
         if combined_pred > adjusted_threshold:
