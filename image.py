@@ -131,20 +131,22 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
                 combined_pred = 0.35 * max_pred + 0.35 * mean_pred + 0.3 * median_pred
             adjusted_threshold = threshold
         else:
-            # Regular models: If max is high (>0.65), give it more weight (fake detection)
-            # Otherwise use balanced weighting (real detection)
-            if max_pred > 0.65:
-                combined_pred = 0.45 * max_pred + 0.35 * mean_pred + 0.2 * median_pred
+            # Regular models: More aggressive fake detection
+            # If max is high (>0.6), strongly weight it (fake artifacts present)
+            if max_pred > 0.6:
+                combined_pred = 0.6 * max_pred + 0.3 * mean_pred + 0.1 * median_pred
+            elif max_pred > 0.5:
+                combined_pred = 0.5 * max_pred + 0.35 * mean_pred + 0.15 * median_pred
             else:
-                combined_pred = 0.3 * max_pred + 0.4 * mean_pred + 0.3 * median_pred
-            # Slightly lower threshold to catch more fakes, but not too aggressive
-            adjusted_threshold = max(threshold * 0.95, 0.35)
+                combined_pred = 0.4 * max_pred + 0.4 * mean_pred + 0.2 * median_pred
+            # Lower threshold to catch more AI edits
+            adjusted_threshold = max(threshold * 0.9, 0.35)
         
         # Clamp combined_pred to [0, 1] to prevent > 100% confidence
         combined_pred = max(0.0, min(1.0, float(combined_pred)))
         
         # Enhance with Swin Transformer RGB+FFT dual-branch analysis (full-image context)
-        # This helps catch AI edits that EfficientNet might miss
+        # This is CRITICAL for catching AI edits that EfficientNet misses
         # Swin RGB analyzes spatial patterns, Swin FFT analyzes frequency domain artifacts
         swin_pred = None
         if SWIN_AVAILABLE:
@@ -153,11 +155,15 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
                 swin_label, swin_prob = swin_rgb_fft_image_pred(image_path=image_path, threshold=threshold)
                 swin_pred = swin_prob
                 
-                # Combine EfficientNet (face-focused) + Swin RGB+FFT (full-image + frequency) predictions
-                # Swin RGB+FFT is better at catching full-image AI edits and frequency artifacts
-                # EfficientNet is better at face-specific artifacts
-                # Weight: 60% EfficientNet, 40% Swin RGB+FFT (give more weight to Swin for AI edits)
-                enhanced_pred = 0.6 * combined_pred + 0.4 * swin_pred
+                # AGGRESSIVE combination: Prioritize Swin RGB+FFT for AI edits
+                # Swin RGB+FFT is MUCH better at catching AI-modified images
+                # Give it more weight when it detects fake, less when it says real
+                if swin_prob > threshold:
+                    # Swin detected fake - trust it more heavily (75% weight)
+                    enhanced_pred = 0.25 * combined_pred + 0.75 * swin_pred
+                else:
+                    # Swin says real, but still use it (50% weight)
+                    enhanced_pred = 0.5 * combined_pred + 0.5 * swin_pred
                 
                 # Use enhanced prediction
                 combined_pred = enhanced_pred
