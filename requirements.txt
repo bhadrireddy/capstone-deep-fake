@@ -12,6 +12,5 @@ scipy
 tqdm
 pillow
 matplotlib
-dlib
-librosa
-torchaudio
+
+
