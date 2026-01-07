@@ -158,7 +158,8 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
             try:
                 # Extract video frames for transformer analysis
                 videoreader_full = VideoReader(verbose=False)
-                result = videoreader_full.read_frames(video_path, num_frames=min(frames_per_video, 32))
+                # SPEED OPTIMIZATION: Reduce frames for transformer analysis
+                result = videoreader_full.read_frames(video_path, num_frames=min(frames_per_video, 16))
                 
                 if result is not None:
                     frames_np, idxs = result
@@ -169,7 +170,8 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
                         # Convert frames to PIL and prepare RGB tensors
                         rgb_frames = []
                         fft_frames = []
-                        for frame in frames_np[:16]:  # Use up to 16 frames for transformer
+                        # SPEED OPTIMIZATION: Reduce frames processed
+                        for frame in frames_np[:8]:  # Use up to 8 frames instead of 16
                             pil_frame = Image.fromarray(frame).convert('RGB')
                             rgb_tensor, fft_tensor = _prepare_rgb_and_fft_tensors(
                                 pil_frame, size=(224, 224), device=device_transformer
@@ -193,24 +195,12 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
                 # If Transformer fails, continue with EfficientNet only
                 print(f"Video Transformer RGB+FFT enhancement failed (using EfficientNet only): {e}")
         
-        # AGGRESSIVE COMBINATION: If EITHER face model OR transformer is suspicious, increase fake probability
+        # OPTIMIZED COMBINATION: Use Swin Transformer as primary (weighted 70%)
+        # Binary classification optimized for true positives on real videos
         if transformer_pred is not None:
-            # Both models available - use OR logic: if either is suspicious, boost fake probability
-            face_suspicious = face_pred > threshold
-            transformer_suspicious = transformer_pred > threshold
-            
-            if face_suspicious or transformer_suspicious:
-                # If EITHER model is suspicious, prioritize the higher prediction
-                max_pred = max(face_pred, transformer_pred)
-                if max_pred > 0.6:
-                    # Very suspicious - heavily weight the max
-                    combined_pred = 0.7 * max_pred + 0.2 * ((face_pred + transformer_pred) / 2) + 0.1 * min(face_pred, transformer_pred)
-                else:
-                    # Moderately suspicious - balanced boost
-                    combined_pred = 0.5 * max_pred + 0.3 * ((face_pred + transformer_pred) / 2) + 0.2 * min(face_pred, transformer_pred)
-            else:
-                # Both say real, but use transformer more
-                combined_pred = 0.4 * face_pred + 0.6 * transformer_pred
+            # Swin Transformer is primary decision maker (better for true positives)
+            # Use weighted combination: 70% Swin, 30% EfficientNet
+            combined_pred = 0.7 * transformer_pred + 0.3 * face_pred
         else:
             # Only face model available
             combined_pred = face_pred
@@ -218,26 +208,19 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
         # Clamp combined_pred to [0, 1]
         combined_pred = max(0.0, min(1.0, float(combined_pred)))
         
-        # THREE-CLASS OUTPUT: Fake, Suspicious, Likely Real (same as images)
-        fake_threshold = 0.65
+        # THREE-CLASS OUTPUT: Deepfake, Authentic, Suspicious (same as images)
+        fake_threshold = 0.6
         suspicious_lower = 0.35
         
         if combined_pred > fake_threshold:
-            # FAKE - High confidence
-            return "Fake", combined_pred
+            # DEEPFAKE - > 0.6
+            return "Deepfake", combined_pred
         elif combined_pred >= suspicious_lower:
-            # SUSPICIOUS - Uncertain, could be fake or real
+            # SUSPICIOUS - 0.35 - 0.6
             return "Suspicious", combined_pred
         else:
-            # LIKELY REAL - But with lower confidence if close to suspicious threshold
-            if combined_pred > 0.25:
-                # Close to suspicious - very low confidence
-                confidence_penalty = (combined_pred - 0.25) / 0.1
-                adjusted_confidence = combined_pred * (1 - 0.5 * confidence_penalty)
-                return "Likely Real", max(0.05, adjusted_confidence)
-            else:
-                # Far from suspicious - moderate confidence, but still lower than fake
-                return "Likely Real", combined_pred * 0.8
+            # AUTHENTIC - < 0.35
+            return "Authentic", combined_pred
             
     except Exception as e:
         print(f"Error processing video: {e}")
