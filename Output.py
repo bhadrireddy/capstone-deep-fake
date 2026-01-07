@@ -541,24 +541,33 @@ elif st.session_state.page in ["main", "results"]:
             # Format results properly
             is_fake = result_text == 'fake'
             
-            # Calculate confidence: For fake, use pred directly. For real, use (1-pred)
-            # But ensure we amplify the confidence to make it more meaningful
+            # Calculate confidence based on distance from threshold
+            # Confidence should be high when prediction is far from threshold (certain)
+            # Confidence should be low when prediction is close to threshold (uncertain)
+            threshold_val = 0.5  # Default threshold
+            
             if is_fake:
-                # Fake: pred closer to 1.0 = higher confidence
-                # Map [threshold, 1.0] to [50%, 100%] for better visibility
-                raw_conf = pred
-                if raw_conf < 0.5:
-                    confidence = 50 + (raw_conf / 0.5) * 30  # Map [0, 0.5] to [50%, 80%]
+                # Fake: pred > threshold
+                # Confidence increases as pred moves further above threshold towards 1.0
+                # Map pred from [threshold, 1.0] to confidence [60%, 100%]
+                if pred >= threshold_val:
+                    # Distance from threshold
+                    distance = (pred - threshold_val) / (1.0 - threshold_val)
+                    confidence = 60 + (distance * 40)  # 60% to 100%
                 else:
-                    confidence = 80 + ((raw_conf - 0.5) / 0.5) * 20  # Map [0.5, 1.0] to [80%, 100%]
+                    # Shouldn't happen, but handle it
+                    confidence = 50
             else:
-                # Real: pred closer to 0.0 = higher confidence
-                # Map [0.0, threshold] to [50%, 100%] for better visibility
-                raw_conf = 1.0 - pred
-                if raw_conf < 0.5:
-                    confidence = 50 + (raw_conf / 0.5) * 30  # Map [0, 0.5] to [50%, 80%]
+                # Real: pred <= threshold
+                # Confidence increases as pred moves further below threshold towards 0.0
+                # Map pred from [0.0, threshold] to confidence [60%, 100%]
+                if pred <= threshold_val:
+                    # Distance from threshold (inverted)
+                    distance = (threshold_val - pred) / threshold_val
+                    confidence = 60 + (distance * 40)  # 60% to 100%
                 else:
-                    confidence = 80 + ((raw_conf - 0.5) / 0.5) * 20  # Map [0.5, 1.0] to [80%, 100%]
+                    # Shouldn't happen, but handle it
+                    confidence = 50
             
             # Ensure confidence is between 0-100%
             confidence = max(0.0, min(100.0, confidence))
