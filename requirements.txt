@@ -1,6 +1,7 @@
 streamlit
 torch
 torchvision
+timm
 efficientnet-pytorch
 albumentations
 opencv-python-headless
@@ -11,3 +12,4 @@ scipy
 tqdm
 pillow
 matplotlib
+
