@@ -459,7 +459,13 @@ elif st.session_state.page in ["main", "results"]:
             with st.expander("Show Advanced Settings"):
                 model = st.selectbox(
                     "Select Model",
-                    ("EfficientNetB4", "EfficientNetB4ST", "EfficientNetAutoAttB4", "EfficientNetAutoAttB4ST")
+                    (
+                        "EfficientNetB4",
+                        "EfficientNetB4ST",
+                        "EfficientNetAutoAttB4",
+                        "EfficientNetAutoAttB4ST",
+                        "ViT_RGB_FFT",  # New transformer-based RGB + FFT model (full image)
+                    )
                 )
                 dataset = st.radio(
                     "Select Dataset", 
