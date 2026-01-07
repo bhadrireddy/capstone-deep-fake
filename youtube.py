@@ -13,6 +13,18 @@ from architectures import fornet,weights
 from isplutils import utils
 from functools import lru_cache
 
+# Optional import for Transformer models (Video Swin RGB+FFT)
+try:
+    from transformer_models import (
+        swin_video_pred, 
+        _compute_fft_video_clip,
+        _prepare_rgb_and_fft_tensors,
+        _compute_fft_image
+    )
+    TRANSFORMER_AVAILABLE = True
+except (ImportError, ModuleNotFoundError) as e:
+    TRANSFORMER_AVAILABLE = False
+
 @lru_cache(maxsize=None)
 def _load_video_model(net_model: str, train_db: str, device_str: str):
     """
@@ -138,6 +150,59 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
         
         # Clamp combined_pred to [0, 1] to prevent > 100% confidence
         combined_pred = max(0.0, min(1.0, float(combined_pred)))
+        
+        # Enhance with Video Swin Transformer RGB+FFT (full-video temporal analysis)
+        # This is CRITICAL for catching AI edits in videos
+        transformer_pred = None
+        if TRANSFORMER_AVAILABLE:
+            try:
+                # Extract video frames for transformer analysis
+                videoreader_full = VideoReader(verbose=False)
+                result = videoreader_full.read_frames(video_path, num_frames=min(frames_per_video, 32))
+                
+                if result is not None:
+                    frames_np, idxs = result
+                    if len(frames_np) > 0:
+                        # Prepare RGB and FFT tensors for video clip
+                        device_transformer = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+                        
+                        # Convert frames to PIL and prepare RGB tensors
+                        rgb_frames = []
+                        fft_frames = []
+                        for frame in frames_np[:16]:  # Use up to 16 frames for transformer
+                            pil_frame = Image.fromarray(frame).convert('RGB')
+                            rgb_tensor, fft_tensor = _prepare_rgb_and_fft_tensors(
+                                pil_frame, size=(224, 224), device=device_transformer
+                            )
+                            rgb_frames.append(rgb_tensor.squeeze(0))  # Remove batch dim
+                            fft_frames.append(fft_tensor.squeeze(0))
+                        
+                        if len(rgb_frames) > 0:
+                            # Stack into video clips: (T, 3, H, W) and (T, 1, H, W)
+                            rgb_clip = torch.stack(rgb_frames, dim=0).to(device_transformer)
+                            fft_clip = torch.stack(fft_frames, dim=0).to(device_transformer)
+                            
+                            # Get Video Swin prediction
+                            transformer_prob = swin_video_pred(
+                                video_clip_rgb=rgb_clip,
+                                video_clip_fft=fft_clip,
+                                device=device_transformer
+                            )
+                            transformer_pred = transformer_prob
+                            
+                            # AGGRESSIVE combination: Prioritize Transformer for AI edits
+                            if transformer_prob > threshold:
+                                # Transformer detected fake - trust it heavily (70% weight)
+                                enhanced_pred = 0.3 * combined_pred + 0.7 * transformer_pred
+                            else:
+                                # Transformer says real, balanced combination
+                                enhanced_pred = 0.5 * combined_pred + 0.5 * transformer_pred
+                            
+                            combined_pred = enhanced_pred
+                            combined_pred = max(0.0, min(1.0, float(combined_pred)))
+            except Exception as e:
+                # If Transformer fails, continue with EfficientNet only
+                print(f"Video Transformer RGB+FFT enhancement failed (using EfficientNet only): {e}")
         
         # Return fake probability in both cases for consistent confidence calculation
         if combined_pred > adjusted_threshold:
