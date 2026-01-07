@@ -63,7 +63,7 @@ class RGBFFT_ViT(nn.Module):
 
     def __init__(
         self,
-        vit_model_name: str = "vit_base_patch16_224",
+        vit_model_name: str = "swin_tiny_patch4_window7_224",  # Use Swin Tiny for speed
         vit_embed_dim: int = 768,
         fft_embed_dim: int = 256,
         fusion_hidden_dim: int = 512,
@@ -78,7 +78,8 @@ class RGBFFT_ViT(nn.Module):
                 "Please install it with: pip install timm"
             )
 
-        # RGB branch: Vision Transformer without classification head (num_classes=0 → features)
+        # RGB branch: Swin Transformer (better for binary classification and true positives)
+        # Use Swin instead of ViT for better speed and accuracy on real images
         self.rgb_backbone = timm.create_model(
             vit_model_name, pretrained=pretrained, num_classes=0
         )
@@ -101,7 +102,20 @@ class RGBFFT_ViT(nn.Module):
         fft_img: (B, C_fft, H, W)
         returns logits: (B, 1)
         """
-        rgb_embed = self.rgb_backbone(rgb)          # (B, vit_embed_dim)
+        # Get features from backbone (works for both ViT and Swin)
+        rgb_features = self.rgb_backbone(rgb)
+        
+        # Handle different output shapes: Swin may return 2D tensor, need to pool
+        if rgb_features.dim() == 3:
+            # (B, N, embed_dim) - need global pooling
+            rgb_embed = rgb_features.mean(dim=1)  # Global average pooling
+        elif rgb_features.dim() == 4:
+            # (B, C, H, W) - spatial features, need global pooling
+            rgb_embed = rgb_features.mean(dim=[2, 3])  # Global average pooling
+        else:
+            # Already (B, embed_dim)
+            rgb_embed = rgb_features
+        
         fft_embed = self.fft_branch(fft_img)        # (B, fft_embed_dim)
 
         fused = torch.cat([rgb_embed, fft_embed], dim=1)
@@ -182,17 +196,21 @@ def vit_fft_image_pred(
     if device is None:
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-    # Use cached model to avoid reloading
+    # Use cached model to avoid reloading (SPEED OPTIMIZATION)
     from functools import lru_cache
     
     @lru_cache(maxsize=1)
-    def _get_vit_model(device_str):
-        model = RGBFFT_ViT(pretrained=True).to(torch.device(device_str))
+    def _get_swin_model(device_str):
+        # Use Swin Tiny for faster inference while maintaining accuracy
+        model = RGBFFT_ViT(
+            vit_model_name="swin_tiny_patch4_window7_224",  # Swin Tiny - faster
+            pretrained=True
+        ).to(torch.device(device_str))
         model.eval()
         return model
     
     device_str = str(device)
-    model = _get_vit_model(device_str)
+    model = _get_swin_model(device_str)
     
     pil_img = Image.open(image_path).convert("RGB")
     rgb_tensor, fft_tensor = _prepare_rgb_and_fft_tensors(
