@@ -106,40 +106,38 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
             faces_fake_pred = torch.sigmoid(logits).cpu().numpy().flatten()
         
         # Better aggregation strategy for video:
-        # 1. Mean of all predictions (overall trend)
-        # 2. Max prediction (catches frames with clear deepfake artifacts)
-        # 3. Percentile-based (reduces impact of outliers)
+        # Use median-heavy approach to reduce false positives
         mean_pred = float(faces_fake_pred.mean())
         max_pred = float(faces_fake_pred.max())
         median_pred = float(np.median(faces_fake_pred))
-        
-        # Use 75th percentile to be more sensitive to fake frames
         percentile_75 = float(np.percentile(faces_fake_pred, 75))
         
-        # Weighted combination: prioritize max and high percentiles
+        # Weighted combination: prioritize median and mean (more conservative)
         # For ST models, use a more conservative approach
         if 'ST' in net_model:
-            # ST models: more balanced, less aggressive weighting
-            cnn_prob = 0.35 * max_pred + 0.35 * mean_pred + 0.2 * percentile_75 + 0.1 * median_pred
-            # ST models don't need as much physiological boost
+            # ST models: median-heavy, conservative weighting to reduce false positives
+            cnn_prob = 0.45 * median_pred + 0.35 * mean_pred + 0.15 * percentile_75 + 0.05 * max_pred
+            # ST models: less physiological boost to be more conservative
             physio_prob = _physio_heuristics_from_detections(vid_fake_faces)
-            combined_pred = 0.9 * cnn_prob + 0.1 * physio_prob
-            # ST models don't need aggressive threshold adjustment
+            combined_pred = 0.92 * cnn_prob + 0.08 * physio_prob
+            # ST models use original threshold (more conservative)
             adjusted_threshold = threshold
         else:
-            # Regular models: more aggressive weighting
-            cnn_prob = 0.4 * max_pred + 0.3 * percentile_75 + 0.2 * mean_pred + 0.1 * median_pred
-            # Physiological heuristics from detections (no heavy deps)
+            # Regular models: median-heavy but allow some percentile influence
+            # This reduces false positives while still detecting fakes
+            cnn_prob = 0.5 * median_pred + 0.3 * mean_pred + 0.15 * percentile_75 + 0.05 * max_pred
+            # Physiological heuristics from detections (reduced weight for conservatism)
             physio_prob = _physio_heuristics_from_detections(vid_fake_faces)
-            # Fuse CNN probability with physiological score
-            combined_pred = 0.85 * cnn_prob + 0.15 * physio_prob
-            # Adjust threshold slightly lower and cap it to be more sensitive to AI-generated content.
-            adjusted_threshold = min(threshold * 0.9, 0.4)
+            # Fuse CNN probability with physiological score (reduced physio weight)
+            combined_pred = 0.9 * cnn_prob + 0.1 * physio_prob
+            # Use original threshold for better true negative rate
+            adjusted_threshold = threshold
         
         # Clamp combined_pred to [0, 1] to prevent > 100% confidence
         combined_pred = max(0.0, min(1.0, float(combined_pred)))
         
         # Return fake probability in both cases for consistent confidence calculation
+        # Only classify as fake if prediction is clearly above threshold
         if combined_pred > adjusted_threshold:
             return 'fake', combined_pred
         else:
