@@ -448,9 +448,15 @@ elif st.session_state.page in ["main", "results"]:
                 label_visibility="collapsed"
             )
 
+            # Restrict allowed file types based on selected file type
+            if file_type == "Image":
+                upload_types = ["jpg", "jpeg", "png"]
+            else:
+                upload_types = ["mp4"]
+
             uploaded_file = st.file_uploader(
                 f"Drop your {file_type.lower()} here...",
-                type=["jpg", "jpeg", "png", "mp4"]
+                type=upload_types
             )
 
             # ✅ FIX: always define frames
