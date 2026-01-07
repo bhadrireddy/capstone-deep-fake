@@ -484,6 +484,19 @@ elif st.session_state.page in ["main", "results"]:
                 if file_type == "Video":
                     frames = st.slider("Select Frames", 0, 100, 50)
 
+            # Display uploaded file
+            if uploaded_file:
+                st.markdown("### 📤 Uploaded File Preview")
+                if file_type == "Image":
+                    image = Image.open(uploaded_file)
+                    st.image(image, caption=uploaded_file.name, use_container_width=True)
+                else:
+                    # For videos, show video player
+                    video_bytes = uploaded_file.read()
+                    st.video(video_bytes)
+                    # Reset file pointer for processing
+                    uploaded_file.seek(0)
+            
             if uploaded_file and st.button("CHECK FOR DEEPFAKE", use_container_width=True):
                 with st.spinner("Analyzing media..."):
                     time.sleep(1)
@@ -511,7 +524,8 @@ elif st.session_state.page in ["main", "results"]:
                 st.session_state.result_data = {
                     "result": result,
                     "pred": pred,
-                    "file_type": file_type
+                    "file_type": file_type,
+                    "file_name": uploaded_file.name
                 }
                 st.rerun()
 
@@ -520,9 +534,33 @@ elif st.session_state.page in ["main", "results"]:
             result_text = data["result"]
             pred = float(data["pred"])
             
+            # Clamp prediction to [0, 1] range to prevent > 100% confidence
+            pred = max(0.0, min(1.0, pred))
+            
             # Format results properly
             is_fake = result_text == 'fake'
-            confidence = pred * 100 if is_fake else (1 - pred) * 100
+            
+            # Calculate confidence: For fake, use pred directly. For real, use (1-pred)
+            # But ensure we amplify the confidence to make it more meaningful
+            if is_fake:
+                # Fake: pred closer to 1.0 = higher confidence
+                # Map [threshold, 1.0] to [50%, 100%] for better visibility
+                raw_conf = pred
+                if raw_conf < 0.5:
+                    confidence = 50 + (raw_conf / 0.5) * 30  # Map [0, 0.5] to [50%, 80%]
+                else:
+                    confidence = 80 + ((raw_conf - 0.5) / 0.5) * 20  # Map [0.5, 1.0] to [80%, 100%]
+            else:
+                # Real: pred closer to 0.0 = higher confidence
+                # Map [0.0, threshold] to [50%, 100%] for better visibility
+                raw_conf = 1.0 - pred
+                if raw_conf < 0.5:
+                    confidence = 50 + (raw_conf / 0.5) * 30  # Map [0, 0.5] to [50%, 80%]
+                else:
+                    confidence = 80 + ((raw_conf - 0.5) / 0.5) * 20  # Map [0.5, 1.0] to [80%, 100%]
+            
+            # Ensure confidence is between 0-100%
+            confidence = max(0.0, min(100.0, confidence))
             percentage = round(confidence)
             
             st.markdown(f"""
