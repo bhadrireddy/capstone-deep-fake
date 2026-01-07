@@ -459,6 +459,20 @@ elif st.session_state.page in ["main", "results"]:
                 type=upload_types
             )
 
+            # Display uploaded file preview right under the uploader (small size)
+            if uploaded_file:
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    if file_type == "Image":
+                        image = Image.open(uploaded_file)
+                        st.image(image, caption=uploaded_file.name, width=300)
+                    else:
+                        # For videos, show video player
+                        video_bytes = uploaded_file.read()
+                        st.video(video_bytes)
+                        # Reset file pointer for processing
+                        uploaded_file.seek(0)
+
             # ✅ FIX: always define frames
             frames = 0
 
@@ -483,19 +497,6 @@ elif st.session_state.page in ["main", "results"]:
 
                 if file_type == "Video":
                     frames = st.slider("Select Frames", 0, 100, 50)
-
-            # Display uploaded file
-            if uploaded_file:
-                st.markdown("### 📤 Uploaded File Preview")
-                if file_type == "Image":
-                    image = Image.open(uploaded_file)
-                    st.image(image, caption=uploaded_file.name, use_container_width=True)
-                else:
-                    # For videos, show video player
-                    video_bytes = uploaded_file.read()
-                    st.video(video_bytes)
-                    # Reset file pointer for processing
-                    uploaded_file.seek(0)
             
             if uploaded_file and st.button("CHECK FOR DEEPFAKE", use_container_width=True):
                 with st.spinner("Analyzing media..."):
