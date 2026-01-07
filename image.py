@@ -9,8 +9,16 @@ sys.path.append('..')
 from blazeface import FaceExtractor, BlazeFace
 from architectures import fornet,weights
 from isplutils import utils
+from transformer_model import vit_fft_image_pred
 
 def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_path="notebook/samples/lynaeydofd_fr0.jpg"):
+    # New path: full-frame RGB + FFT ViT model (no face crops, no DFDC/FFPP assumptions)
+    if model == 'ViT_RGB_FFT':
+        # Use the provided threshold only to derive the label; vit_fft_image_pred
+        # always returns the raw sigmoid probability as second output.
+        return vit_fft_image_pred(image_path=image_path, threshold=threshold)
+
+    # Existing path: EfficientNet/Xception models with DFDC/FFPP weights and face crops.
     """
     Choose an architecture between
     - EfficientNetB4
@@ -79,8 +87,9 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
         # This helps catch cases where only some faces are fake
         combined_pred = 0.6 * max_pred + 0.4 * mean_pred
         
-        # Adjust threshold slightly lower to be more sensitive to AI-generated content
-        adjusted_threshold = threshold * 0.9
+        # Adjust threshold slightly lower and cap it to be more sensitive to AI-generated content.
+        # This makes the detector more likely to flag subtle AI edits as fake.
+        adjusted_threshold = min(threshold * 0.9, 0.4)
         
         # Return fake probability in both cases for consistent confidence calculation
         if combined_pred > adjusted_threshold:
