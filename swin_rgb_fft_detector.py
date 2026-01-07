@@ -56,18 +56,28 @@ class SwinRGBFFTDetector(nn.Module):
     - RGB branch: Full-image spatial analysis
     - FFT branch: Frequency domain analysis
     """
-    def __init__(self, model_name='swin_base_patch4_window7_224', pretrained=True):
+    def __init__(self, model_name='swin_large_patch4_window7_224', pretrained=True):
         super().__init__()
         if not TIMM_AVAILABLE:
             raise ImportError("timm package is required. Install with: pip install timm")
         
-        # RGB Branch: Swin Transformer
-        self.rgb_backbone = timm.create_model(
-            model_name,
-            pretrained=pretrained,
-            num_classes=0,
-            global_pool='',
-        )
+        # RGB Branch: Use Swin Large for better feature extraction
+        # Large model has better capacity for detecting subtle AI artifacts
+        try:
+            self.rgb_backbone = timm.create_model(
+                model_name,
+                pretrained=pretrained,
+                num_classes=0,
+                global_pool='',
+            )
+        except:
+            # Fallback to base if large not available
+            self.rgb_backbone = timm.create_model(
+                'swin_base_patch4_window7_224',
+                pretrained=pretrained,
+                num_classes=0,
+                global_pool='',
+            )
         
         # FFT Branch: CNN for frequency domain
         self.fft_branch = FFTBranch()
@@ -162,19 +172,36 @@ def compute_fft_image(img_array):
     else:
         gray = img_array
     
-    # Apply FFT
+    # Convert to float32 for FFT
+    gray = gray.astype(np.float32)
+    
+    # Apply 2D FFT
     f_transform = np.fft.fft2(gray)
     f_shift = np.fft.fftshift(f_transform)
+    
+    # Get magnitude spectrum
     magnitude_spectrum = np.abs(f_shift)
     
-    # Log scale for better visualization
-    magnitude_spectrum = np.log1p(magnitude_spectrum)
+    # Get phase spectrum (AI edits often affect phase)
+    phase_spectrum = np.angle(f_shift)
+    
+    # Enhanced analysis: Combine magnitude and phase irregularities
+    # AI edits often create anomalies in both magnitude and phase
+    magnitude_norm = (magnitude_spectrum - magnitude_spectrum.min()) / (magnitude_spectrum.max() - magnitude_spectrum.min() + 1e-8)
+    phase_variance = np.abs(phase_spectrum - np.median(phase_spectrum))
+    phase_variance_norm = (phase_variance - phase_variance.min()) / (phase_variance.max() - phase_variance.min() + 1e-8)
+    
+    # Combine magnitude and phase anomalies (AI artifacts show in both)
+    combined = 0.7 * magnitude_norm + 0.3 * phase_variance_norm
+    
+    # Log scale for better visualization and artifact detection
+    combined = np.log1p(combined * 100)
     
     # Normalize to [0, 255]
-    magnitude_spectrum = ((magnitude_spectrum - magnitude_spectrum.min()) / 
-                         (magnitude_spectrum.max() - magnitude_spectrum.min() + 1e-8) * 255)
+    combined = ((combined - combined.min()) / 
+                (combined.max() - combined.min() + 1e-8) * 255)
     
-    return magnitude_spectrum.astype(np.uint8)
+    return combined.astype(np.uint8)
 
 
 @lru_cache(maxsize=1)
@@ -182,10 +209,17 @@ def _load_swin_rgb_fft_model(device_str: str):
     """Load and cache Swin RGB+FFT model"""
     device = torch.device(device_str)
     
-    model = SwinRGBFFTDetector(
-        model_name='swin_base_patch4_window7_224',
-        pretrained=True
-    ).eval().to(device)
+    # Try Swin Large first (better accuracy), fallback to Base
+    try:
+        model = SwinRGBFFTDetector(
+            model_name='swin_large_patch4_window7_224',
+            pretrained=True
+        ).eval().to(device)
+    except:
+        model = SwinRGBFFTDetector(
+            model_name='swin_base_patch4_window7_224',
+            pretrained=True
+        ).eval().to(device)
     
     return model, device
 
@@ -269,8 +303,8 @@ def swin_rgb_fft_image_pred(image_path, threshold=0.5):
             # Image too small, just resize
             crop_positions = [(0, 0)]
         
-        # Process each crop
-        for left, top in crop_positions[:3]:  # Use up to 3 crops for speed
+        # Process each crop - use more crops for better coverage
+        for left, top in crop_positions[:5]:  # Use up to 5 crops for better detection
             if left >= 0 and top >= 0:
                 crop = img_resized.crop((left, top, left + crop_size, top + crop_size))
                 if crop.size != (224, 224):
@@ -308,23 +342,34 @@ def swin_rgb_fft_image_pred(image_path, threshold=0.5):
                 prob = torch.sigmoid(logits).item()
                 all_preds.append(prob)
         
-        # Aggregate predictions
+        # Aggressive aggregation to catch AI edits
         mean_pred = float(np.mean(all_preds))
         max_pred = float(np.max(all_preds))
         median_pred = float(np.median(all_preds))
-        
-        # Adaptive weighting based on variance
         std_pred = float(np.std(all_preds))
-        if std_pred > 0.15:  # High variance - likely fake artifacts
-            combined_pred = 0.5 * max_pred + 0.3 * mean_pred + 0.2 * median_pred
+        
+        # More aggressive weighting: prioritize max to catch any fake regions
+        # AI edits often leave artifacts in specific regions, max catches these
+        if std_pred > 0.12:  # High variance - fake artifacts detected
+            # Very aggressive: trust max heavily
+            combined_pred = 0.65 * max_pred + 0.25 * mean_pred + 0.1 * median_pred
+        elif max_pred > 0.55:  # Even moderate max values might indicate fake
+            # Moderate aggression
+            combined_pred = 0.55 * max_pred + 0.3 * mean_pred + 0.15 * median_pred
         else:
-            combined_pred = 0.4 * max_pred + 0.4 * mean_pred + 0.2 * median_pred
+            # Low values, use balanced approach
+            combined_pred = 0.45 * max_pred + 0.35 * mean_pred + 0.2 * median_pred
+        
+        # Boost prediction if any crop strongly indicates fake
+        if max_pred > 0.7:
+            # Very high max - strongly boost combined prediction
+            combined_pred = 0.7 * max_pred + 0.3 * combined_pred
         
         # Clamp to [0, 1]
         combined_pred = max(0.0, min(1.0, combined_pred))
         
-        # Decision
-        adjusted_threshold = threshold * 0.9  # Slightly lower for better fake detection
+        # More aggressive threshold for better fake detection
+        adjusted_threshold = threshold * 0.85  # Lower threshold to catch more fakes
         
         if combined_pred > adjusted_threshold:
             return "fake", combined_pred
