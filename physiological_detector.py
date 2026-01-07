@@ -17,16 +17,24 @@ from collections import deque
 
 try:
     import cv2
-    import dlib
     CV2_AVAILABLE = True
 except ImportError:
     CV2_AVAILABLE = False
+    cv2 = None
+
+try:
+    import dlib
+    DLIB_AVAILABLE = True
+except ImportError:
+    DLIB_AVAILABLE = False
+    dlib = None
 
 try:
     import librosa
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
+    librosa = None
 
 
 # ============================================================================
