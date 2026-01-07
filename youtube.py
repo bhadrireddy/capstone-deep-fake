@@ -10,16 +10,71 @@ from blazeface import FaceExtractor, BlazeFace , VideoReader
 # from blazeface import FaceExtractor, BlazeFace, VideoReader
 from architectures import fornet,weights
 from isplutils import utils
+from transformer_model import vit_fft_video_frame_preds, _compute_fft_image
 
 def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames=100,video_path="notebook/samples/mqzvfufzoq.mp4"):
     
+    # New path: full-frame RGB + FFT ViT model (no face crops, no DFDC/FFPP assumptions)
+    if model == 'ViT_RGB_FFT':
+        """
+        For the transformer-based RGB+FFT model, we:
+          - read multiple frames from the video using VideoReader,
+          - build RGB and FFT tensors for each frame,
+          - run the ViT model on all frames,
+          - aggregate sigmoid probabilities over frames,
+          - return the video-level probability of being AI-generated.
+        """
+        device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
+        videoreader = VideoReader(verbose=False)
+        result = videoreader.read_frames(video_path, num_frames=frames)
+
+        if result is None:
+            return 'real', 0.5
+
+        frames_np, idxs = result  # (N, H, W, 3), [N]
+        if len(frames_np) == 0:
+            return 'real', 0.5
+
+        # Prepare RGB and FFT tensors for all frames
+        rgb_list = []
+        fft_list = []
+        for frame in frames_np:
+            # frame: (H, W, 3), uint8 BGR converted to RGB in VideoReader
+            pil_img = Image.fromarray(frame)
+
+            # Reuse the same FFT computation as for images
+            fft_np = _compute_fft_image(pil_img, size=(224, 224))  # (H, W)
+            fft_np = fft_np.astype('float32')
+
+            # RGB preprocessing
+            pil_rgb = pil_img.convert("RGB").resize((224, 224), Image.BILINEAR)
+            rgb_np = np.array(pil_rgb).astype('float32') / 255.0
+            rgb_np = rgb_np.transpose(2, 0, 1)  # HWC → CHW
+
+            rgb_list.append(rgb_np)
+            fft_list.append(fft_np)
+
+        rgb_arr = np.stack(rgb_list, axis=0)  # (N, 3, H, W)
+        fft_arr = np.stack(fft_list, axis=0)  # (N, H, W)
+        fft_arr = fft_arr[:, None, :, :]      # (N, 1, H, W)
+
+        frames_rgb = torch.from_numpy(rgb_arr)
+        frames_fft = torch.from_numpy(fft_arr)
+
+        probs_fake = vit_fft_video_frame_preds(frames_rgb, frames_fft, device=device)  # (N,)
+
+        # Aggregate over frames without hardcoding threshold; just compute a robust statistic.
+        mean_pred = float(probs_fake.mean())
+        max_pred = float(probs_fake.max())
+        perc75 = float(np.percentile(probs_fake.numpy(), 75))
+
+        combined_pred = 0.4 * max_pred + 0.3 * perc75 + 0.3 * mean_pred
+
+        label = 'fake' if combined_pred >= threshold else 'real'
+        return label, combined_pred
+
     """
-    Choose an architecture between
-    - EfficientNetB4
-    - EfficientNetB4ST
-    - EfficientNetAutoAttB4
-    - EfficientNetAutoAttB4ST
-    - Xception
+    Existing path: CNN-based EfficientNet/Xception models trained on DFDC/FFPP using face crops.
     """
     net_model = model
 
@@ -93,8 +148,9 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
         # This helps catch videos where only some frames are manipulated
         combined_pred = 0.4 * max_pred + 0.3 * percentile_75 + 0.2 * mean_pred + 0.1 * median_pred
         
-        # Adjust threshold slightly lower to be more sensitive to AI-generated content
-        adjusted_threshold = threshold * 0.9
+        # Adjust threshold slightly lower and cap it to be more sensitive to AI-generated content.
+        # This makes the detector more likely to flag subtle AI edits as fake.
+        adjusted_threshold = min(threshold * 0.9, 0.4)
         
         # Return fake probability in both cases for consistent confidence calculation
         if combined_pred > adjusted_threshold:
