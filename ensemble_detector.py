@@ -219,6 +219,7 @@ def ensemble_video_prediction(
     audio_visual_logits: Optional[torch.Tensor] = None,
     threshold: float = 0.5,
     device: torch.device = None,
+    use_trained_fusion: bool = False,
 ) -> Dict[str, float]:
     """
     High-level function for ensemble video prediction.
@@ -239,67 +240,104 @@ def ensemble_video_prediction(
     if device is None:
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     
-    # Initialize ensemble
-    ensemble = EnsembleDetector(
-        use_spatial_frequency=spatial_freq_logits is not None,
-        use_temporal_video=temporal_video_logits is not None,
-        use_physiological=physiological_logits is not None,
-        use_audio_visual=audio_visual_logits is not None,
-        learnable_weights=True,
-    ).to(device)
-    ensemble.eval()
-    
-    # Prepare inputs
-    if spatial_freq_logits is not None and not isinstance(spatial_freq_logits, torch.Tensor):
-        spatial_freq_logits = torch.tensor([spatial_freq_logits]).to(device)
-    if temporal_video_logits is not None and not isinstance(temporal_video_logits, torch.Tensor):
-        temporal_video_logits = torch.tensor([temporal_video_logits]).to(device)
-    if physiological_logits is not None and not isinstance(physiological_logits, torch.Tensor):
-        physiological_logits = torch.tensor([physiological_logits]).to(device)
-    if audio_visual_logits is not None and not isinstance(audio_visual_logits, torch.Tensor):
-        audio_visual_logits = torch.tensor([audio_visual_logits]).to(device)
-    
-    # Run ensemble
-    with torch.no_grad():
-        output = ensemble(
-            spatial_freq_pred=spatial_freq_logits,
-            temporal_video_pred=temporal_video_logits,
-            physiological_pred=physiological_logits,
-            audio_visual_pred=audio_visual_logits,
-        )
-    
-    # Extract results
-    combined_prob = output['probabilities'].item()
-    confidence = output['confidence'].item()
-    weights = output['weights'].squeeze(0).cpu().numpy()
-    
-    # Adaptive thresholding
-    threshold_adapter = AdaptiveThresholdEnsemble(base_threshold=threshold)
-    label, final_confidence = threshold_adapter.predict(combined_prob, confidence)
-    adaptive_threshold = threshold_adapter.compute_adaptive_threshold(confidence)
-    
-    # Individual probabilities
+    # Convert to probabilities and filter out unreliable models
     individual_probs = {}
+    reliable_probs = []
+    reliable_names = []
+    
+    # Prepare inputs and convert to probabilities
     if spatial_freq_logits is not None:
-        individual_probs['spatial_frequency'] = torch.sigmoid(spatial_freq_logits).item()
+        if not isinstance(spatial_freq_logits, torch.Tensor):
+            spatial_freq_logits = torch.tensor([spatial_freq_logits]).to(device)
+        prob = torch.sigmoid(spatial_freq_logits).item()
+        individual_probs['spatial_frequency'] = prob
+        reliable_probs.append(prob)
+        reliable_names.append('spatial_frequency')
+    
     if temporal_video_logits is not None:
-        individual_probs['temporal_video'] = torch.sigmoid(temporal_video_logits).item()
+        if not isinstance(temporal_video_logits, torch.Tensor):
+            temporal_video_logits = torch.tensor([temporal_video_logits]).to(device)
+        prob = torch.sigmoid(temporal_video_logits).item()
+        individual_probs['temporal_video'] = prob
+        # Only use if different from spatial (avoid duplicate)
+        if len(reliable_probs) == 0 or abs(prob - reliable_probs[0]) > 0.1:
+            reliable_probs.append(prob)
+            reliable_names.append('temporal_video')
+    
+    # Skip physiological and audio-visual if they're from random/untrained models
+    # (they'll have unreliable predictions)
+    # Only include if we have real features (not placeholders)
     if physiological_logits is not None:
-        individual_probs['physiological'] = torch.sigmoid(physiological_logits).item()
+        if not isinstance(physiological_logits, torch.Tensor):
+            physiological_logits = torch.tensor([physiological_logits]).to(device)
+        prob = torch.sigmoid(physiological_logits).item()
+        individual_probs['physiological'] = prob
+        # Only trust if probability is reasonable (not too extreme, which indicates random)
+        if 0.2 < prob < 0.8:
+            reliable_probs.append(prob)
+            reliable_names.append('physiological')
+    
     if audio_visual_logits is not None:
-        individual_probs['audio_visual'] = torch.sigmoid(audio_visual_logits).item()
+        if not isinstance(audio_visual_logits, torch.Tensor):
+            audio_visual_logits = torch.tensor([audio_visual_logits]).to(device)
+        prob = torch.sigmoid(audio_visual_logits).item()
+        individual_probs['audio_visual'] = prob
+        # Only trust if probability is reasonable
+        if 0.2 < prob < 0.8:
+            reliable_probs.append(prob)
+            reliable_names.append('audio_visual')
+    
+    # If no reliable models, fallback
+    if len(reliable_probs) == 0:
+        return {
+            'label': 'real',
+            'probability': 0.5,
+            'confidence': 0.0,
+            'adaptive_threshold': threshold,
+            'weights': {},
+            'individual_probs': individual_probs,
+        }
+    
+    # Simple weighted averaging (give more weight to spatial-temporal models)
+    if len(reliable_probs) == 1:
+        combined_prob = reliable_probs[0]
+        weights_dict = {reliable_names[0]: 1.0}
+    elif len(reliable_probs) == 2:
+        # If we have spatial + temporal, weight them equally
+        combined_prob = np.mean(reliable_probs)
+        weights_dict = {name: 0.5 for name in reliable_names}
+    else:
+        # Weight spatial/temporal models more heavily
+        weights = []
+        for name in reliable_names:
+            if name in ['spatial_frequency', 'temporal_video']:
+                weights.append(0.4)
+            else:
+                weights.append(0.2 / (len(reliable_probs) - 2))
+        
+        # Normalize weights
+        weight_sum = sum(weights)
+        weights = [w / weight_sum for w in weights]
+        combined_prob = sum(p * w for p, w in zip(reliable_probs, weights))
+        weights_dict = {name: w for name, w in zip(reliable_names, weights)}
+    
+    # Calculate confidence based on agreement between models
+    if len(reliable_probs) > 1:
+        # High confidence if models agree, low if they disagree
+        variance = np.var(reliable_probs)
+        confidence = max(0.0, 1.0 - variance * 4)  # Scale variance to [0, 1]
+    else:
+        confidence = 0.5  # Medium confidence with single model
+    
+    # Use base threshold (adaptive thresholding can cause issues with untrained models)
+    label = 'fake' if combined_prob >= threshold else 'real'
     
     return {
         'label': label,
         'probability': float(combined_prob),
-        'confidence': float(final_confidence),
-        'adaptive_threshold': float(adaptive_threshold),
-        'weights': {
-            'spatial_frequency': float(weights[0]) if weights[0] > 0 else 0.0,
-            'temporal_video': float(weights[1]) if weights[1] > 0 else 0.0,
-            'physiological': float(weights[2]) if weights[2] > 0 else 0.0,
-            'audio_visual': float(weights[3]) if weights[3] > 0 else 0.0,
-        },
+        'confidence': float(confidence),
+        'adaptive_threshold': threshold,
+        'weights': weights_dict,
         'individual_probs': individual_probs,
     }
 
