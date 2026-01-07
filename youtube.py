@@ -398,40 +398,35 @@ def _ensemble_video_pred(video_path, threshold=0.5, num_frames=32):
         # ========================================================================
         # 3. Physiological Model: Facial Landmarks + LSTM
         # ========================================================================
-        if PHYSIOLOGICAL_MODEL_AVAILABLE:
-            try:
-                from physiological_detector import FacialLandmarksLSTM
-                
-                # Placeholder: Extract landmarks (in production, use dlib/OpenCV)
-                # For now, use random landmarks matching expected shape
-                landmarks_sequence = torch.randn(1, T, 68, 2).to(device)
-                
-                model_physio = FacialLandmarksLSTM().to(device)
-                model_physio.eval()
-                
-                with torch.no_grad():
-                    physiological_logits = model_physio(landmarks_sequence)
-            except Exception as e:
-                print(f"Physiological model failed: {e}")
+        # Skip for now - requires real landmark extraction (not random placeholders)
+        # When real landmarks are available, uncomment this:
+        # if PHYSIOLOGICAL_MODEL_AVAILABLE:
+        #     try:
+        #         from physiological_detector import FacialLandmarksLSTM
+        #         # Extract real landmarks using dlib/OpenCV
+        #         # landmarks_sequence = extract_landmarks(frames_np)
+        #         # model_physio = FacialLandmarksLSTM().to(device)
+        #         # physiological_logits = model_physio(landmarks_sequence)
+        #     except Exception as e:
+        #         print(f"Physiological model failed: {e}")
+        physiological_logits = None  # Skip untrained random models
         
         # ========================================================================
         # 4. Audio–Visual Model: SyncNet
         # ========================================================================
-        if PHYSIOLOGICAL_MODEL_AVAILABLE and AUDIO_AVAILABLE:
-            try:
-                from physiological_detector import SyncNetLike
-                
-                # Placeholder: Extract lip region and audio
-                lip_region = torch.randn(1, 3, 96, 96).to(device)
-                audio_features = torch.randn(1, 1, 128, 128).to(device)
-                
-                model_sync = SyncNetLike().to(device)
-                model_sync.eval()
-                
-                with torch.no_grad():
-                    audio_visual_logits = model_sync(lip_region, audio_features)
-            except Exception as e:
-                print(f"Audio-Visual model failed: {e}")
+        # Skip for now - requires real audio extraction (not random placeholders)
+        # When real audio is available, uncomment this:
+        # if PHYSIOLOGICAL_MODEL_AVAILABLE and AUDIO_AVAILABLE:
+        #     try:
+        #         from physiological_detector import SyncNetLike
+        #         # Extract real audio and lip regions
+        #         # audio_features = extract_audio_features(video_path)
+        #         # lip_region = extract_lip_regions(frames_np)
+        #         # model_sync = SyncNetLike().to(device)
+        #         # audio_visual_logits = model_sync(lip_region, audio_features)
+        #     except Exception as e:
+        #         print(f"Audio-Visual model failed: {e}")
+        audio_visual_logits = None  # Skip untrained random models
         
         # ========================================================================
         # Ensemble Combination
