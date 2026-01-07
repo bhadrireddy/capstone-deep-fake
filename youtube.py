@@ -13,25 +13,6 @@ from architectures import fornet,weights
 from isplutils import utils
 from functools import lru_cache
 
-# Optional import for physiological detector
-try:
-    from physiological_detector import (
-        PhysiologicalDetector,
-        calculate_ear,
-        EyeBlinkGazeLSTM,
-        EARLSTM,
-        FacialLandmarksLSTM,
-        GNNLandmarkHead,
-        SyncNetLike,
-        AudioVisualTransformer,
-        rPPGCNN,
-        TemporalFilteringCNN
-    )
-    from physiological_detector import CV2_AVAILABLE, AUDIO_AVAILABLE
-    PHYSIOLOGICAL_MODEL_AVAILABLE = True
-except (ImportError, ModuleNotFoundError) as e:
-    PHYSIOLOGICAL_MODEL_AVAILABLE = False
-
 @lru_cache(maxsize=None)
 def _load_video_model(net_model: str, train_db: str, device_str: str):
     """
