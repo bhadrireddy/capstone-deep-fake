@@ -112,26 +112,30 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
         max_pred = float(faces_pred.max())
         median_pred = float(np.median(faces_pred))
         
-        # More conservative approach to reduce false positives
-        # Use median as it's less affected by outliers than mean
+        # Balanced approach: Use max when it's high (catch fakes), use median when max is low (reduce false positives)
         # For ST models, use balanced weighting
         if 'ST' in net_model:
-            # ST models: use median-heavy weighting (more conservative)
-            combined_pred = 0.4 * median_pred + 0.35 * mean_pred + 0.25 * max_pred
-            # ST models use original threshold (more conservative)
+            # ST models: If max is high (>0.6), give it more weight (fake detection)
+            # Otherwise use balanced weighting (real detection)
+            if max_pred > 0.6:
+                combined_pred = 0.4 * max_pred + 0.35 * mean_pred + 0.25 * median_pred
+            else:
+                combined_pred = 0.35 * max_pred + 0.35 * mean_pred + 0.3 * median_pred
             adjusted_threshold = threshold
         else:
-            # Regular models: still use median-heavy but allow some max influence
-            # This reduces false positives while still catching fakes
-            combined_pred = 0.5 * median_pred + 0.3 * mean_pred + 0.2 * max_pred
-            # Use original threshold for better true negative rate (reduce false positives)
-            adjusted_threshold = threshold
+            # Regular models: If max is high (>0.65), give it more weight (fake detection)
+            # Otherwise use balanced weighting (real detection)
+            if max_pred > 0.65:
+                combined_pred = 0.45 * max_pred + 0.35 * mean_pred + 0.2 * median_pred
+            else:
+                combined_pred = 0.3 * max_pred + 0.4 * mean_pred + 0.3 * median_pred
+            # Slightly lower threshold to catch more fakes, but not too aggressive
+            adjusted_threshold = max(threshold * 0.95, 0.35)
         
         # Clamp combined_pred to [0, 1] to prevent > 100% confidence
         combined_pred = max(0.0, min(1.0, float(combined_pred)))
         
         # Return fake probability in both cases for consistent confidence calculation
-        # Only classify as fake if prediction is clearly above threshold
         if combined_pred > adjusted_threshold:
             return "fake", combined_pred
         else:
