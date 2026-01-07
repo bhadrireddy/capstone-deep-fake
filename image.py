@@ -123,6 +123,9 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
             # Adjust threshold slightly lower and cap it to be more sensitive to AI-generated content.
             adjusted_threshold = min(threshold * 0.9, 0.4)
         
+        # Clamp combined_pred to [0, 1] to prevent > 100% confidence
+        combined_pred = max(0.0, min(1.0, float(combined_pred)))
+        
         # Return fake probability in both cases for consistent confidence calculation
         if combined_pred > adjusted_threshold:
             return "fake", combined_pred
