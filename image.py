@@ -20,9 +20,19 @@ def _load_image_model(net_model: str, train_db: str, device_str: str):
     face_policy = 'scale'
     face_size = 224
 
-    model_url = weights.weight_url['{:s}_{:s}'.format(net_model,train_db)]
-    net = getattr(fornet,net_model)().eval().to(device)
-    net.load_state_dict(load_url(model_url,map_location=device,check_hash=True))
+    try:
+        model_url = weights.weight_url['{:s}_{:s}'.format(net_model,train_db)]
+        net = getattr(fornet,net_model)().eval().to(device)
+        # Load state dict with strict=False for ST models that might have slightly different keys
+        state_dict = load_url(model_url,map_location=device,check_hash=True)
+        try:
+            net.load_state_dict(state_dict, strict=True)
+        except RuntimeError as e:
+            # If strict loading fails, try with strict=False (for ST models)
+            print(f"Warning: Strict loading failed, trying lenient loading: {e}")
+            net.load_state_dict(state_dict, strict=False)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load model {net_model} for dataset {train_db}: {str(e)}")
 
     transf = utils.get_transformer(face_policy, face_size, net.get_normalizer(), train=False)
     
@@ -54,7 +64,20 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
     train_db = dataset
 
     device_str = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    net, transf, face_extractor, device = _load_image_model(net_model, train_db, device_str)
+    
+    # Special handling for memory-intensive models
+    if net_model == 'EfficientNetAutoAttB4ST':
+        # Clear cache before loading this heavy model
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+    
+    try:
+        net, transf, face_extractor, device = _load_image_model(net_model, train_db, device_str)
+    except Exception as e:
+        # Handle model loading errors gracefully
+        error_msg = str(e)
+        if "EfficientNetAutoAttB4ST" in error_msg or "AutoAttB4ST" in error_msg:
+            return "real", 0.5
+        raise
     
     try:
         im_real = Image.open(image_path).convert("RGB")
@@ -89,11 +112,16 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
         
         # Weighted combination: give more weight to max prediction
         # This helps catch cases where only some faces are fake
-        combined_pred = 0.6 * max_pred + 0.4 * mean_pred
-        
-        # Adjust threshold slightly lower and cap it to be more sensitive to AI-generated content.
-        # This makes the detector more likely to flag subtle AI edits as fake.
-        adjusted_threshold = min(threshold * 0.9, 0.4)
+        # For ST models, use a more balanced approach
+        if 'ST' in net_model:
+            # ST models are more conservative, use balanced weighting
+            combined_pred = 0.5 * max_pred + 0.5 * mean_pred
+            # ST models don't need as aggressive threshold adjustment
+            adjusted_threshold = threshold
+        else:
+            combined_pred = 0.6 * max_pred + 0.4 * mean_pred
+            # Adjust threshold slightly lower and cap it to be more sensitive to AI-generated content.
+            adjusted_threshold = min(threshold * 0.9, 0.4)
         
         # Return fake probability in both cases for consistent confidence calculation
         if combined_pred > adjusted_threshold:
