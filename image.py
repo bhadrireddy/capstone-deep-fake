@@ -11,12 +11,12 @@ from architectures import fornet,weights
 from isplutils import utils
 from functools import lru_cache
 
-# Optional import for Swin Transformer (RGB + FFT dual-branch)
+# Optional import for Transformer models (RGB + FFT dual-branch)
 try:
-    from swin_rgb_fft_detector import swin_rgb_fft_image_pred
-    SWIN_AVAILABLE = True
+    from transformer_models import vit_fft_image_pred, _prepare_rgb_and_fft_tensors, RGBFFT_ViT
+    TRANSFORMER_AVAILABLE = True
 except (ImportError, ModuleNotFoundError) as e:
-    SWIN_AVAILABLE = False
+    TRANSFORMER_AVAILABLE = False
 
 
 @lru_cache(maxsize=None)
@@ -145,32 +145,35 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
         # Clamp combined_pred to [0, 1] to prevent > 100% confidence
         combined_pred = max(0.0, min(1.0, float(combined_pred)))
         
-        # Enhance with Swin Transformer RGB+FFT dual-branch analysis (full-image context)
-        # This is CRITICAL for catching AI edits that EfficientNet misses
-        # Swin RGB analyzes spatial patterns, Swin FFT analyzes frequency domain artifacts
-        swin_pred = None
-        if SWIN_AVAILABLE:
+        # Enhance with Transformer RGB+FFT dual-branch analysis (full-image context)
+        # This is CRITICAL for catching AI edits that EfficientNet might miss
+        # ViT RGB analyzes spatial patterns, FFT analyzes frequency domain artifacts
+        transformer_pred = None
+        if TRANSFORMER_AVAILABLE:
             try:
-                # Get Swin RGB+FFT prediction (full-image, no face crops)
-                swin_label, swin_prob = swin_rgb_fft_image_pred(image_path=image_path, threshold=threshold)
-                swin_pred = swin_prob
+                # Get ViT RGB+FFT prediction (full-image, no face crops)
+                transformer_label, transformer_prob = vit_fft_image_pred(
+                    image_path=image_path, 
+                    threshold=threshold
+                )
+                transformer_pred = transformer_prob
                 
-                # AGGRESSIVE combination: Prioritize Swin RGB+FFT for AI edits
-                # Swin RGB+FFT is MUCH better at catching AI-modified images
+                # AGGRESSIVE combination: Prioritize Transformer RGB+FFT for AI edits
+                # Transformer RGB+FFT is MUCH better at catching AI-modified images
                 # Give it more weight when it detects fake, less when it says real
-                if swin_prob > threshold:
-                    # Swin detected fake - trust it more heavily (75% weight)
-                    enhanced_pred = 0.25 * combined_pred + 0.75 * swin_pred
+                if transformer_prob > threshold:
+                    # Transformer detected fake - trust it more heavily (75% weight)
+                    enhanced_pred = 0.25 * combined_pred + 0.75 * transformer_pred
                 else:
-                    # Swin says real, but still use it (50% weight)
-                    enhanced_pred = 0.5 * combined_pred + 0.5 * swin_pred
+                    # Transformer says real, but still use it (50% weight)
+                    enhanced_pred = 0.5 * combined_pred + 0.5 * transformer_pred
                 
                 # Use enhanced prediction
                 combined_pred = enhanced_pred
                 combined_pred = max(0.0, min(1.0, float(combined_pred)))
             except Exception as e:
-                # If Swin fails, continue with EfficientNet only
-                print(f"Swin Transformer RGB+FFT enhancement failed (using EfficientNet only): {e}")
+                # If Transformer fails, continue with EfficientNet only
+                print(f"Transformer RGB+FFT enhancement failed (using EfficientNet only): {e}")
         
         # Return fake probability in both cases for consistent confidence calculation
         if combined_pred > adjusted_threshold:
