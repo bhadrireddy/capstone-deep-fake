@@ -1,8 +1,7 @@
 streamlit
-torch
-torchvision
+torch==2.0.1
+torchvision==0.15.2
 efficientnet-pytorch
-timm
 albumentations
 opencv-python-headless
 numpy
@@ -12,5 +11,3 @@ scipy
 tqdm
 pillow
 matplotlib
-
-
