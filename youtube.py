@@ -12,19 +12,6 @@ from blazeface import FaceExtractor, BlazeFace , VideoReader
 from architectures import fornet,weights
 from isplutils import utils
 
-# Optional import for transformer model (only if timm is available)
-try:
-    from transformer_model import (
-        swin_video_pred, 
-        _compute_fft_image, 
-        _compute_fft_video_clip,
-        _prepare_rgb_and_fft_tensors
-    )
-    TRANSFORMER_MODEL_AVAILABLE = True
-except (ImportError, ModuleNotFoundError) as e:
-    TRANSFORMER_MODEL_AVAILABLE = False
-    # Silently fail - old models will still work
-
 # Optional import for physiological detector
 try:
     from physiological_detector import (
@@ -46,79 +33,6 @@ except (ImportError, ModuleNotFoundError) as e:
 
 def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames=100,video_path="notebook/samples/mqzvfufzoq.mp4"):
     
-    # Physiological and Behavioral Detection Model
-    if model == 'Physiological_Behavioral':
-        if not PHYSIOLOGICAL_MODEL_AVAILABLE:
-            raise ImportError(
-                "Physiological_Behavioral model requires 'dlib' and 'librosa' packages. "
-                "Please install them with: pip install dlib librosa torchaudio"
-            )
-        return _physiological_video_pred(video_path, threshold, frames)
-    
-    # New path: Video Swin Transformer RGB+FFT model (no face crops, temporal video understanding)
-    if model == 'ViT_RGB_FFT':
-        if not TRANSFORMER_MODEL_AVAILABLE:
-            raise ImportError(
-                "ViT_RGB_FFT model requires 'timm' package. "
-                "Please install it with: pip install timm"
-            )
-        """
-        For the Video Swin Transformer RGB+FFT model:
-          - Read video frames as temporal clips (not individual frames)
-          - Build RGB and FFT video clip tensors
-          - Process entire video clips with temporal understanding
-          - Return video-level prediction (NOT frame-wise aggregation)
-        """
-        device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
-        videoreader = VideoReader(verbose=False)
-        
-        # Read frames as a temporal clip (recommended: 16-32 frames for good temporal context)
-        clip_length = min(frames, 32)  # Limit to reasonable clip length for video transformer
-        result = videoreader.read_frames(video_path, num_frames=clip_length)
-
-        if result is None:
-            return 'real', 0.5
-
-        frames_np, idxs = result  # (T, H, W, 3), [T]
-        if len(frames_np) == 0:
-            return 'real', 0.5
-
-        T = len(frames_np)
-        
-        # Prepare RGB and FFT video clip tensors
-        rgb_clip_list = []
-        fft_clip_list = []
-        
-        for frame in frames_np:
-            # frame: (H, W, 3), uint8 RGB from VideoReader
-            pil_img = Image.fromarray(frame)
-
-            # RGB preprocessing: resize and normalize
-            pil_rgb = pil_img.convert("RGB").resize((224, 224), Image.BILINEAR)
-            rgb_np = np.array(pil_rgb).astype('float32') / 255.0
-            rgb_np = rgb_np.transpose(2, 0, 1)  # HWC → CHW: (3, H, W)
-            rgb_clip_list.append(rgb_np)
-
-            # FFT preprocessing
-            fft_np = _compute_fft_image(pil_img, size=(224, 224))  # (H, W)
-            fft_clip_list.append(fft_np)
-
-        # Stack to form video clips: (T, 3, H, W) and (T, H, W)
-        rgb_clip_arr = np.stack(rgb_clip_list, axis=0)  # (T, 3, 224, 224)
-        fft_clip_arr = np.stack(fft_clip_list, axis=0).astype('float32')  # (T, 224, 224)
-        fft_clip_arr = fft_clip_arr[:, None, :, :]  # (T, 1, 224, 224)
-
-        # Convert to tensors
-        rgb_clip_tensor = torch.from_numpy(rgb_clip_arr).float()  # (T, 3, H, W)
-        fft_clip_tensor = torch.from_numpy(fft_clip_arr).float()  # (T, 1, H, W)
-
-        # Process entire video clip with Video Swin Transformer (temporal understanding)
-        # This returns a SINGLE video-level probability (NOT frame-wise)
-        prob_fake = swin_video_pred(rgb_clip_tensor, fft_clip_tensor, device=device)
-
-        # Single video-level prediction - no frame aggregation needed
-        label = 'fake' if prob_fake >= threshold else 'real'
-        return label, prob_fake
 
     """
     Existing path: CNN-based EfficientNet/Xception models trained on DFDC/FFPP using face crops.
@@ -193,7 +107,13 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
         
         # Weighted combination: prioritize max and high percentiles
         # This helps catch videos where only some frames are manipulated
-        combined_pred = 0.4 * max_pred + 0.3 * percentile_75 + 0.2 * mean_pred + 0.1 * median_pred
+        cnn_prob = 0.4 * max_pred + 0.3 * percentile_75 + 0.2 * mean_pred + 0.1 * median_pred
+        
+        # Physiological heuristics from detections (no heavy deps)
+        physio_prob = _physio_heuristics_from_detections(vid_fake_faces)
+        
+        # Fuse CNN probability with physiological score
+        combined_pred = 0.85 * cnn_prob + 0.15 * physio_prob
         
         # Adjust threshold slightly lower and cap it to be more sensitive to AI-generated content.
         # This makes the detector more likely to flag subtle AI edits as fake.
@@ -301,4 +221,75 @@ def _physiological_video_pred(video_path, threshold=0.5, num_frames=32):
         traceback.print_exc()
         return 'real', 0.5
     
+def _physio_heuristics_from_detections(vid_frames) -> float:
+    """
+    Lightweight physiological/behavioral proxy using only BlazeFace detections.
+    Produces a score in [0,1] where higher = more likely fake.
+    Heuristics:
+      - Detection dropout ratio
+      - Bounding box center/area jerk (second derivative magnitude)
+      - Keypoint temporal instability (using 6 kpts from detections columns 4:16)
+    """
+    centers = []
+    areas = []
+    kpt_series = []
+    num_frames = len(vid_frames)
+    noface_count = 0
+    
+    for frame in vid_frames:
+        dets = frame.get('detections')
+        if dets is None or len(dets) == 0:
+            noface_count += 1
+            continue
+        det = dets[0]  # best face
+        ymin, xmin, ymax, xmax = det[:4]
+        cx = (xmin + xmax) / 2.0
+        cy = (ymin + ymax) / 2.0
+        area = max(1.0, (xmax - xmin) * (ymax - ymin))
+        centers.append([cx, cy])
+        areas.append(area)
+        # 6 keypoints (x,y) in columns 4..15
+        kpts = det[4:16].reshape(6, 2)
+        kpt_series.append(kpts)
+    
+    if num_frames == 0:
+        return 0.5
+    
+    dropout_ratio = noface_count / max(1, num_frames)
+    
+    def jerk(seq):
+        if len(seq) < 3:
+            return 0.0
+        seq = np.asarray(seq, dtype=np.float32)
+        d1 = np.diff(seq, axis=0)
+        d2 = np.diff(d1, axis=0)
+        return float(np.mean(np.linalg.norm(d2, axis=-1)))
+    
+    # Normalize centers by sqrt(area) to be scale-invariant
+    if len(centers) >= 3:
+        centers = np.asarray(centers, dtype=np.float32)
+        areas = np.asarray(areas, dtype=np.float32)
+        scale = np.sqrt(np.maximum(areas, 1.0))[:, None]
+        norm_centers = centers / scale
+        center_jerk = jerk(norm_centers)
+        # Normalize jerk into [0,1]
+        center_score = float(np.tanh(center_jerk / 5.0))
+    else:
+        center_score = 0.0
+    
+    # Keypoint instability
+    if len(kpt_series) >= 3:
+        kpt_arr = np.stack(kpt_series, axis=0)  # (T, 6, 2)
+        # Normalize by bbox scale approximately using median area
+        med_scale = np.sqrt(np.median(areas)) if len(areas) > 0 else 1.0
+        kpt_arr = kpt_arr / max(1.0, med_scale)
+        kpt_jerk = jerk(kpt_arr.reshape(len(kpt_series), -1))
+        kpt_score = float(np.tanh(kpt_jerk / 5.0))
+    else:
+        kpt_score = 0.0
+    
+    # Combine heuristics
+    physio_score = 0.5 * dropout_ratio + 0.25 * center_score + 0.25 * kpt_score
+    return float(np.clip(physio_score, 0.0, 1.0))
+
 # print(preprocess())
