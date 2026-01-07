@@ -6,7 +6,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from PIL import Image
-import timm
+
+try:
+    import timm
+    TIMM_AVAILABLE = True
+except ImportError:
+    TIMM_AVAILABLE = False
+    timm = None
 
 
 class FFTBranchCNN(nn.Module):
@@ -65,6 +71,12 @@ class RGBFFT_ViT(nn.Module):
         pretrained: bool = True,
     ):
         super().__init__()
+        
+        if not TIMM_AVAILABLE:
+            raise ImportError(
+                "RGBFFT_ViT requires 'timm' package. "
+                "Please install it with: pip install timm"
+            )
 
         # RGB branch: Vision Transformer without classification head (num_classes=0 → features)
         self.rgb_backbone = timm.create_model(
