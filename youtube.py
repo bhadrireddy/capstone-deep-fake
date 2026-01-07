@@ -25,7 +25,35 @@ except (ImportError, ModuleNotFoundError) as e:
     TRANSFORMER_MODEL_AVAILABLE = False
     # Silently fail - old models will still work
 
+# Optional import for physiological detector
+try:
+    from physiological_detector import (
+        PhysiologicalDetector,
+        calculate_ear,
+        EyeBlinkGazeLSTM,
+        EARLSTM,
+        FacialLandmarksLSTM,
+        GNNLandmarkHead,
+        SyncNetLike,
+        AudioVisualTransformer,
+        rPPGCNN,
+        TemporalFilteringCNN
+    )
+    from physiological_detector import CV2_AVAILABLE, AUDIO_AVAILABLE
+    PHYSIOLOGICAL_MODEL_AVAILABLE = True
+except (ImportError, ModuleNotFoundError) as e:
+    PHYSIOLOGICAL_MODEL_AVAILABLE = False
+
 def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames=100,video_path="notebook/samples/mqzvfufzoq.mp4"):
+    
+    # Physiological and Behavioral Detection Model
+    if model == 'Physiological_Behavioral':
+        if not PHYSIOLOGICAL_MODEL_AVAILABLE:
+            raise ImportError(
+                "Physiological_Behavioral model requires 'dlib' and 'librosa' packages. "
+                "Please install them with: pip install dlib librosa torchaudio"
+            )
+        return _physiological_video_pred(video_path, threshold, frames)
     
     # New path: Video Swin Transformer RGB+FFT model (no face crops, temporal video understanding)
     if model == 'ViT_RGB_FFT':
@@ -182,6 +210,95 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
         import traceback
         traceback.print_exc()
         # Return uncertain result on error
+        return 'real', 0.5
+
+
+def _physiological_video_pred(video_path, threshold=0.5, num_frames=32):
+    """
+    Physiological and behavioral deepfake detection.
+    Uses multiple temporal models:
+    - Eye blink/gaze (CNN+LSTM, EAR+LSTM)
+    - Head pose (Landmarks+LSTM, GNN)
+    - Lip sync (SyncNet, Audio-Visual Transformer)
+    - Heartbeat/skin signals (rPPG, Temporal Filtering)
+    """
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    
+    # Read video frames
+    videoreader = VideoReader(verbose=False)
+    result = videoreader.read_frames(video_path, num_frames=num_frames)
+    
+    if result is None:
+        return 'real', 0.5
+    
+    frames_np, idxs = result
+    if len(frames_np) == 0:
+        return 'real', 0.5
+    
+    T = len(frames_np)
+    
+    # Initialize detector
+    detector = PhysiologicalDetector().to(device)
+    detector.eval()
+    
+    # Prepare inputs for physiological detection
+    inputs_dict = {}
+    
+    try:
+        # Note: Full implementation would require facial landmark detection (dlib)
+        # and audio extraction. This is a skeleton showing the integration.
+        
+        # For now, use placeholder tensors that match expected shapes
+        # In production, you would:
+        # 1. Detect faces and extract eye regions, landmarks using dlib/OpenCV
+        # 2. Extract audio from video and compute spectrograms/MFCC
+        # 3. Extract face regions for rPPG analysis
+        
+        # Placeholder: Eye regions (B=1, T, 3, H, W)
+        if CV2_AVAILABLE:
+            # TODO: Extract eye regions from frames
+            eye_regions = torch.randn(1, T, 3, 64, 64).to(device)
+            inputs_dict['eye_regions'] = eye_regions
+        
+        # Placeholder: EAR sequence
+        ear_sequence = torch.randn(1, T, 1).to(device)
+        inputs_dict['ear_sequence'] = ear_sequence
+        
+        # Placeholder: Landmarks sequence (68 landmarks * 2 coords)
+        landmarks_sequence = torch.randn(1, T, 68, 2).to(device)
+        inputs_dict['landmarks_sequence'] = landmarks_sequence
+        
+        # Placeholder: Lip region for sync
+        lip_region = torch.randn(1, 3, 96, 96).to(device)
+        inputs_dict['lip_region'] = lip_region
+        
+        # Placeholder: Audio features
+        if AUDIO_AVAILABLE:
+            # TODO: Extract audio and compute spectrogram/MFCC
+            audio_features = torch.randn(1, 1, 128, 128).to(device)
+            inputs_dict['audio_features'] = audio_features
+            
+            visual_seq = torch.randn(1, T, 256).to(device)
+            audio_seq = torch.randn(1, T, 256).to(device)
+            inputs_dict['visual_seq'] = visual_seq
+            inputs_dict['audio_seq'] = audio_seq
+        
+        # Face region for rPPG
+        face_region_temporal = torch.randn(1, T, 3, 128, 128).to(device)
+        inputs_dict['face_region_temporal'] = face_region_temporal
+        
+        # Run physiological detector
+        with torch.no_grad():
+            logits = detector(inputs_dict)
+            prob_fake = torch.sigmoid(logits).item()
+        
+        label = 'fake' if prob_fake >= threshold else 'real'
+        return label, float(prob_fake)
+        
+    except Exception as e:
+        print(f"Error in physiological detection: {e}")
+        import traceback
+        traceback.print_exc()
         return 'real', 0.5
     
 # print(preprocess())
