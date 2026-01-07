@@ -466,6 +466,7 @@ elif st.session_state.page in ["main", "results"]:
                         "EfficientNetAutoAttB4ST",
                         "ViT_RGB_FFT",  # Video Swin Transformer RGB + FFT (temporal video understanding)
                         "Physiological_Behavioral",  # Physiological & behavioral detection (eye, head pose, lip sync, heartbeat)
+                        "Ensemble_All",  # ⭐ Ensemble: All models with adaptive weighting (BEST ACCURACY)
                     )
                 )
                 dataset = st.radio(
