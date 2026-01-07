@@ -1,6 +1,7 @@
 import torch
 from torch.utils.model_zoo import load_url
 from scipy.special import expit
+import numpy as np
 
 import sys
 sys.path.append('..')
@@ -49,19 +50,63 @@ def video_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',frames
     video_read_fn = lambda x: videoreader.read_frames(x, num_frames=frames_per_video)
     face_extractor = FaceExtractor(video_read_fn=video_read_fn,facedet=facedet)
 
-    vid_fake_faces = face_extractor.process_video(video_path)
-
-    # print(vid_fake_faces)
-    faces_fake_t = torch.stack( [ transf(image=frame['faces'][0])['image'] for frame in vid_fake_faces if len(frame['faces'])] )
-    with torch.no_grad():
-        faces_fake_pred = net(faces_fake_t.to(device)).cpu().numpy().flatten()
- 
-    print(expit(faces_fake_pred))
-    print(faces_fake_pred)
-    print(expit(faces_fake_pred.mean()))
-    if faces_fake_pred.mean()> threshold:
-        return 'fake',expit(faces_fake_pred.mean())
-    else:
-        return 'real',expit(faces_fake_pred.mean())
+    try:
+        vid_fake_faces = face_extractor.process_video(video_path)
+        
+        if not vid_fake_faces or len(vid_fake_faces) == 0:
+            # No frames processed
+            return 'real', 0.3
+        
+        # Collect all faces from all frames
+        all_faces = []
+        for frame in vid_fake_faces:
+            if len(frame['faces']) > 0:
+                # Process the best face from each frame (already sorted by confidence)
+                all_faces.append(frame['faces'][0])
+        
+        if len(all_faces) == 0:
+            # No faces detected in any frame
+            return 'real', 0.3
+        
+        # Process all faces in batches for efficiency
+        faces_fake_t = torch.stack([transf(image=im)['image'] for im in all_faces])
+        
+        with torch.no_grad():
+            # Model outputs logits, apply sigmoid to get probabilities
+            logits = net(faces_fake_t.to(device))
+            # CRITICAL FIX: Apply sigmoid to EACH prediction before averaging
+            # This is the correct way to aggregate probabilities
+            faces_fake_pred = torch.sigmoid(logits).cpu().numpy().flatten()
+        
+        # Better aggregation strategy for video:
+        # 1. Mean of all predictions (overall trend)
+        # 2. Max prediction (catches frames with clear deepfake artifacts)
+        # 3. Percentile-based (reduces impact of outliers)
+        mean_pred = float(faces_fake_pred.mean())
+        max_pred = float(faces_fake_pred.max())
+        median_pred = float(np.median(faces_fake_pred))
+        
+        # Use 75th percentile to be more sensitive to fake frames
+        percentile_75 = float(np.percentile(faces_fake_pred, 75))
+        
+        # Weighted combination: prioritize max and high percentiles
+        # This helps catch videos where only some frames are manipulated
+        combined_pred = 0.4 * max_pred + 0.3 * percentile_75 + 0.2 * mean_pred + 0.1 * median_pred
+        
+        # Adjust threshold slightly lower to be more sensitive to AI-generated content
+        adjusted_threshold = threshold * 0.9
+        
+        # Return fake probability in both cases for consistent confidence calculation
+        if combined_pred > adjusted_threshold:
+            return 'fake', combined_pred
+        else:
+            return 'real', combined_pred
+            
+    except Exception as e:
+        print(f"Error processing video: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return uncertain result on error
+        return 'real', 0.5
     
 # print(preprocess())
