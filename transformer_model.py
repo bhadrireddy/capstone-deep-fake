@@ -194,13 +194,197 @@ def vit_fft_image_pred(
     return label, float(prob_fake)
 
 
+class FFTBranch3DCNN(nn.Module):
+    """
+    3D CNN branch for FFT (frequency) video input.
+    Processes temporal sequences of FFT images.
+    Input: (B, T, 1, H, W) or (B, T, 3, H, W)
+    Output: embedding vector per video clip.
+    """
+
+    def __init__(self, in_channels: int = 1, embed_dim: int = 256):
+        super().__init__()
+        self.features = nn.Sequential(
+            # 3D conv layers to capture temporal patterns
+            nn.Conv3d(in_channels, 32, kernel_size=(3, 3, 3), stride=(1, 2, 2), padding=(1, 1, 1)),
+            nn.BatchNorm3d(32),
+            nn.ReLU(inplace=True),
+
+            nn.Conv3d(32, 64, kernel_size=(3, 3, 3), stride=(1, 2, 2), padding=(1, 1, 1)),
+            nn.BatchNorm3d(64),
+            nn.ReLU(inplace=True),
+
+            nn.Conv3d(64, 128, kernel_size=(3, 3, 3), stride=(1, 2, 2), padding=(1, 1, 1)),
+            nn.BatchNorm3d(128),
+            nn.ReLU(inplace=True),
+
+            nn.Conv3d(128, 256, kernel_size=(3, 3, 3), stride=(1, 2, 2), padding=(1, 1, 1)),
+            nn.BatchNorm3d(256),
+            nn.ReLU(inplace=True),
+        )
+
+        self.pool = nn.AdaptiveAvgPool3d((1, 1, 1))
+        self.proj = nn.Linear(256, embed_dim)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # x: (B, T, C, H, W) -> (B, C, T, H, W) for Conv3d
+        x = x.permute(0, 2, 1, 3, 4)
+        x = self.features(x)
+        x = self.pool(x)
+        x = x.flatten(1)
+        x = self.proj(x)
+        return x
+
+
+class VideoSwinRGBFFT(nn.Module):
+    """
+    Video Swin Transformer model for deepfake detection.
+    Processes video clips with both RGB and FFT branches.
+    
+    - RGB branch: Swin Transformer adapted for video (temporal modeling)
+    - FFT branch: 3D CNN for frequency-domain temporal patterns
+    - Fusion: concatenated embeddings → MLP → single logit
+    """
+
+    def __init__(
+        self,
+        swin_model_name: str = "swin_tiny_patch4_window7_224",
+        swin_embed_dim: int = 768,
+        fft_embed_dim: int = 256,
+        fusion_hidden_dim: int = 512,
+        fft_in_channels: int = 1,
+        num_frames: int = 16,
+        pretrained: bool = True,
+    ):
+        super().__init__()
+        
+        if not TIMM_AVAILABLE:
+            raise ImportError(
+                "VideoSwinRGBFFT requires 'timm' package. "
+                "Please install it with: pip install timm"
+            )
+
+        # RGB branch: Swin Transformer (spatial transformer with temporal adaptation)
+        # We'll use 2D Swin and adapt it for video by processing frames and aggregating
+        self.swin_backbone = timm.create_model(
+            swin_model_name, pretrained=pretrained, num_classes=0
+        )
+        
+        # Temporal aggregation for Swin features
+        self.temporal_pool = nn.AdaptiveAvgPool1d(1)
+        self.temporal_proj = nn.Linear(num_frames, 1)
+
+        # FFT branch: 3D CNN for temporal frequency patterns
+        self.fft_branch = FFTBranch3DCNN(in_channels=fft_in_channels, embed_dim=fft_embed_dim)
+
+        fusion_in_dim = swin_embed_dim + fft_embed_dim
+
+        self.fusion_mlp = nn.Sequential(
+            nn.Linear(fusion_in_dim, fusion_hidden_dim),
+            nn.GELU(),
+            nn.Dropout(0.2),
+            nn.Linear(fusion_hidden_dim, 1),
+        )
+        
+        self.num_frames = num_frames
+
+    def forward(self, rgb_clip: torch.Tensor, fft_clip: torch.Tensor) -> torch.Tensor:
+        """
+        Process video clips with temporal understanding.
+        
+        rgb_clip: (B, T, 3, H, W) - batch of video clips
+        fft_clip: (B, T, 1, H, W) - batch of FFT video clips
+        returns logits: (B,) - single prediction per video clip
+        """
+        B, T, C, H, W = rgb_clip.shape
+        
+        # RGB branch: Process each frame through Swin, then aggregate temporally
+        # Reshape to process all frames in parallel: (B*T, 3, H, W)
+        rgb_flat = rgb_clip.view(B * T, C, H, W)
+        rgb_features = self.swin_backbone(rgb_flat)  # (B*T, embed_dim)
+        
+        # Reshape back: (B, T, embed_dim)
+        rgb_features = rgb_features.view(B, T, -1)
+        
+        # Temporal aggregation: use attention-weighted pooling
+        # Transpose for pooling: (B, embed_dim, T)
+        rgb_features_t = rgb_features.transpose(1, 2)
+        # Global average pooling over time: (B, embed_dim, 1)
+        rgb_pooled = self.temporal_pool(rgb_features_t).squeeze(-1)  # (B, embed_dim)
+        
+        # FFT branch: 3D CNN processes temporal FFT patterns
+        fft_embed = self.fft_branch(fft_clip)  # (B, fft_embed_dim)
+
+        # Fusion
+        fused = torch.cat([rgb_pooled, fft_embed], dim=1)  # (B, swin_embed_dim + fft_embed_dim)
+        logits = self.fusion_mlp(fused)  # (B, 1)
+        return logits.squeeze(1)  # (B,)
+
+
+def swin_video_pred(
+    video_clip_rgb: torch.Tensor,
+    video_clip_fft: torch.Tensor,
+    device: torch.device = None,
+) -> float:
+    """
+    Run Video Swin Transformer RGB+FFT model on a video clip.
+    
+    video_clip_rgb: (T, 3, H, W) - single video clip
+    video_clip_fft: (T, 1, H, W) - single FFT video clip
+    Returns:
+      prob_fake: scalar sigmoid probability (video-level, not frame-wise)
+    """
+    if device is None:
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    # Add batch dimension: (1, T, 3, H, W) and (1, T, 1, H, W)
+    video_clip_rgb = video_clip_rgb.unsqueeze(0).to(device)
+    video_clip_fft = video_clip_fft.unsqueeze(0).to(device)
+
+    T = video_clip_rgb.shape[1]
+    
+    model = VideoSwinRGBFFT(num_frames=T, pretrained=True).to(device)
+    model.eval()
+
+    with torch.no_grad():
+        logits = model(video_clip_rgb, video_clip_fft)  # (1,)
+        prob_fake = torch.sigmoid(logits).item()
+
+    return float(prob_fake)
+
+
+def _compute_fft_video_clip(
+    frames_list: list,
+    size: Tuple[int, int] = (224, 224)
+) -> np.ndarray:
+    """
+    Compute FFT for a sequence of video frames.
+    
+    frames_list: list of PIL Images or numpy arrays
+    Returns: (T, H, W) float32 array
+    """
+    fft_frames = []
+    for frame in frames_list:
+        if isinstance(frame, np.ndarray):
+            pil_frame = Image.fromarray(frame)
+        else:
+            pil_frame = frame
+        fft_np = _compute_fft_image(pil_frame, size=size)
+        fft_frames.append(fft_np)
+    return np.stack(fft_frames, axis=0).astype(np.float32)
+
+
+# Keep old function for backward compatibility (but mark as deprecated)
 def vit_fft_video_frame_preds(
     frames_rgb: torch.Tensor,
     frames_fft: torch.Tensor,
     device: torch.device = None,
 ) -> torch.Tensor:
     """
-    Run RGB+FFT ViT model on a batch of video frames.
+    DEPRECATED: Frame-wise processing (not recommended for videos).
+    Use swin_video_pred with video clips instead.
+    
+    Run RGB+FFT ViT model on a batch of video frames (frame-by-frame, not temporal).
 
     frames_rgb: (N, 3, H, W)
     frames_fft: (N, 1, H, W)
