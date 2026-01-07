@@ -30,11 +30,16 @@ def process_image(image, model, dataset, threshold):
         return output_string, pred
 
     except Exception as e:
-        return str(e), -1
+        st.error(f"Error processing image: {str(e)}")
+        traceback.print_exc()
+        return f"Error: {str(e)}", 0.5
 
     finally:
-        if os.path.exists("uploads/check.jpg"):
-            os.remove("uploads/check.jpg")
+        try:
+            if os.path.exists("uploads/check.jpg"):
+                os.remove("uploads/check.jpg")
+        except:
+            pass
 
 
 def process_video(video_path, model, dataset, threshold, frames):
@@ -49,8 +54,13 @@ def process_video(video_path, model, dataset, threshold, frames):
         return output_string, pred
 
     except Exception as e:
-        return str(e), -1
+        st.error(f"Error processing video: {str(e)}")
+        traceback.print_exc()
+        return f"Error: {str(e)}", 0.5
 
     finally:
-        if video_path and os.path.exists(video_path):
-            os.remove(video_path)
+        try:
+            if video_path and os.path.exists(video_path):
+                os.remove(video_path)
+        except:
+            pass
