@@ -538,51 +538,68 @@ elif st.session_state.page in ["main", "results"]:
             # Clamp prediction to [0, 1] range to prevent > 100% confidence
             pred = max(0.0, min(1.0, pred))
             
-            # Format results properly
-            is_fake = result_text == 'fake'
+            # Format results properly - Three-class system: Fake, Suspicious, Likely Real
+            result_lower = result_text.lower()
+            is_fake = result_lower == 'fake'
+            is_suspicious = result_lower == 'suspicious'
+            is_likely_real = result_lower == 'likely real'
             
-            # Calculate confidence based on distance from threshold
-            # Confidence should be high when prediction is far from threshold (certain)
-            # Confidence should be low when prediction is close to threshold (uncertain)
-            threshold_val = 0.5  # Default threshold
-            
+            # Calculate confidence percentage based on prediction value
+            # For Fake: high confidence (70-100%)
+            # For Suspicious: moderate confidence (50-70%)
+            # For Likely Real: lower confidence (30-60%) to reflect uncertainty
             if is_fake:
-                # Fake: pred > threshold
-                # Confidence increases as pred moves further above threshold towards 1.0
-                # Map pred from [threshold, 1.0] to confidence [60%, 100%]
-                if pred >= threshold_val:
-                    # Distance from threshold
-                    distance = (pred - threshold_val) / (1.0 - threshold_val)
-                    confidence = 60 + (distance * 40)  # 60% to 100%
+                # Fake: map pred [0.65, 1.0] to confidence [70%, 100%]
+                if pred >= 0.65:
+                    distance = (pred - 0.65) / (1.0 - 0.65)
+                    confidence = 70 + (distance * 30)  # 70% to 100%
                 else:
-                    # Shouldn't happen, but handle it
-                    confidence = 50
-            else:
-                # Real: pred <= threshold
-                # Confidence increases as pred moves further below threshold towards 0.0
-                # Map pred from [0.0, threshold] to confidence [60%, 100%]
-                if pred <= threshold_val:
-                    # Distance from threshold (inverted)
-                    distance = (threshold_val - pred) / threshold_val
-                    confidence = 60 + (distance * 40)  # 60% to 100%
+                    confidence = 65
+                color = '#dc2626'  # Red
+                title = 'Deepfake Detected'
+                message = 'This media appears to be manipulated or AI-generated'
+            elif is_suspicious:
+                # Suspicious: map pred [0.35, 0.65] to confidence [50%, 70%]
+                if pred >= 0.35 and pred <= 0.65:
+                    distance = (pred - 0.35) / (0.65 - 0.35)
+                    confidence = 50 + (distance * 20)  # 50% to 70%
                 else:
-                    # Shouldn't happen, but handle it
-                    confidence = 50
+                    confidence = 60
+                color = '#f59e0b'  # Amber/Orange
+                title = 'Suspicious Content'
+                message = 'Uncertain result - this media may be manipulated. Please verify with additional analysis.'
+            else:  # Likely Real
+                # Likely Real: map pred [0.0, 0.35] to confidence [30%, 60%]
+                # Lower confidence for real to prevent false negatives
+                if pred <= 0.35:
+                    if pred > 0:
+                        distance = (0.35 - pred) / 0.35
+                        confidence = 30 + (distance * 30)  # 30% to 60%
+                    else:
+                        confidence = 30
+                else:
+                    confidence = 35
+                color = '#16a34a'  # Green
+                title = 'Likely Authentic'
+                message = 'No significant manipulation detected, but confidence is moderate'
             
             # Ensure confidence is between 0-100%
             confidence = max(0.0, min(100.0, confidence))
             percentage = round(confidence)
             
             st.markdown(f"""
-                <div style="background-color: #ffffff; padding: 3rem; border-radius: 2rem; margin: 2rem 0;">
-                    <h2 style="font-size: 4rem; font-weight: 900; color: {'#dc2626' if is_fake else '#16a34a'}; text-align: center; margin-bottom: 2rem;">
-                        {'Deepfake Detected' if is_fake else 'Authentic Media'}
+                <div style="background-color: #ffffff; padding: 3rem; border-radius: 2rem; margin: 2rem 0; border: 4px solid {color};">
+                    <h2 style="font-size: 4rem; font-weight: 900; color: {color}; text-align: center; margin-bottom: 2rem;">
+                        {title}
                     </h2>
                     <p style="font-size: 2.5rem; color: #0f172a; text-align: center; margin-bottom: 2rem;">
-                        {'This media appears to be manipulated' if is_fake else 'No manipulation detected'}
+                        {message}
                     </p>
                     <p style="font-size: 3rem; font-weight: 700; color: #0f172a; text-align: center;">
                         Confidence: {percentage}%
+                    </p>
+                    <p style="font-size: 1.5rem; color: #64748b; text-align: center; margin-top: 1rem;">
+                        Prediction Score: {pred:.3f}
                     </p>
                 </div>
             """, unsafe_allow_html=True)
