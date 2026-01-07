@@ -11,6 +11,13 @@ from architectures import fornet,weights
 from isplutils import utils
 from functools import lru_cache
 
+# Optional import for Swin Transformer
+try:
+    from swin_image_detector import swin_image_pred
+    SWIN_AVAILABLE = True
+except (ImportError, ModuleNotFoundError) as e:
+    SWIN_AVAILABLE = False
+
 
 @lru_cache(maxsize=None)
 def _load_image_model(net_model: str, train_db: str, device_str: str):
@@ -45,7 +52,7 @@ def _load_image_model(net_model: str, train_db: str, device_str: str):
 
 
 def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_path="notebook/samples/lynaeydofd_fr0.jpg"):
-
+    
     # Existing path: EfficientNet/Xception models with DFDC/FFPP weights and face crops.
     """
     Choose an architecture between
@@ -54,6 +61,7 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
     - EfficientNetAutoAttB4
     - EfficientNetAutoAttB4ST
     - Xception
+    - SwinTransformer_RGB (full-image RGB, best for AI edits)
     """
     net_model = model
 
@@ -134,6 +142,27 @@ def image_pred(threshold=0.5,model='EfficientNetAutoAttB4',dataset='DFDC',image_
         
         # Clamp combined_pred to [0, 1] to prevent > 100% confidence
         combined_pred = max(0.0, min(1.0, float(combined_pred)))
+        
+        # Enhance with Swin Transformer RGB analysis (full-image context)
+        # This helps catch AI edits that EfficientNet might miss
+        swin_pred = None
+        if SWIN_AVAILABLE:
+            try:
+                # Get Swin prediction (returns (label, prob))
+                swin_label, swin_prob = swin_image_pred(image_path=image_path, threshold=threshold)
+                swin_pred = swin_prob
+                
+                # Combine EfficientNet (face-focused) + Swin (full-image) predictions
+                # Swin is better at catching full-image AI edits, EfficientNet is better at face artifacts
+                # Weight: 70% EfficientNet, 30% Swin
+                enhanced_pred = 0.7 * combined_pred + 0.3 * swin_pred
+                
+                # Use enhanced prediction
+                combined_pred = enhanced_pred
+                combined_pred = max(0.0, min(1.0, float(combined_pred)))
+            except Exception as e:
+                # If Swin fails, continue with EfficientNet only
+                print(f"Swin Transformer enhancement failed (using EfficientNet only): {e}")
         
         # Return fake probability in both cases for consistent confidence calculation
         if combined_pred > adjusted_threshold:
